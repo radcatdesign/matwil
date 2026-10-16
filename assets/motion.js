@@ -128,10 +128,18 @@
              'main .dl div','main .form-card','main .rows>div>*','main .split>div>p:not(.lede)','main .prose>*:not(h2)',
              'main .sec-foot','main .sec .ctas','.close .ctas','.close .reach','main .chips','main figcaption'].join(',');
     var els=$(sel).filter(function(el){return !el.classList.contains('rule-x')&&!el.closest('.hero-copy,.ph-copy');});
-    gsap.set(els,{autoAlpha:0,y:28,transition:'none'});
-    ScrollTrigger.batch(els,{start:'top 92%',once:true,onEnter:function(batch){
-      gsap.to(batch,{autoAlpha:1,y:0,duration:1.1,ease:SOFT,stagger:0.08,clearProps:'transform,visibility,transition'});
-    }});
+    // opacity only, never visibility, so keyboard users can still tab into anything not yet revealed
+    gsap.set(els,{opacity:0,y:28,transition:'none'});
+    els.forEach(function(e){e.setAttribute('data-reveal-wait','');});
+    function show(batch,fast){
+      batch.forEach(function(e){e.removeAttribute('data-reveal-wait');});
+      gsap.to(batch,{opacity:1,y:0,duration:fast?0.35:1.1,ease:SOFT,stagger:fast?0:0.08,overwrite:true,clearProps:'transform,transition'});
+    }
+    ScrollTrigger.batch(els,{start:'top 92%',once:true,onEnter:function(batch){show(batch.filter(function(e){return e.hasAttribute('data-reveal-wait');}));}});
+    document.addEventListener('focusin',function(e){
+      var wait=e.target.closest&&e.target.closest('[data-reveal-wait]');
+      if(wait)show([wait],true);
+    });
   }
 
   /* ---------- menus */

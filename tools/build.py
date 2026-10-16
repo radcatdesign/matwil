@@ -31,6 +31,7 @@ NAV = [
         ('Group coaching', 'services/group-coaching/'),
         ('Public speaking', 'services/public-speaking/')]),
     ('Resources', 'resources/', [
+        ('Bottleneck check', 'bottleneck-check/'),
         ('Blog', 'resources/blogs/'),
         ('Downloadable guides', 'resources/downloadable-guides/'),
         ('Recommended reading', 'resources/recommended-reading/')]),
@@ -91,7 +92,7 @@ POSTS = [
     dict(slug='5-leadership-habits-that-drive-team-success-and-how-to-build-them',
          title='5 leadership habits that drive team success, and how to build them',
          img='5-Leadership-Habits-That-Drive-Team-Success-And-How-to-Build-Them.jpg', pos='50% 30%',
-         alt='Portrait of a smiling professional woman',
+         alt='Portrait of a smiling professional woman', pain='leaders',
          dek='Strong teams usually trace back to a few things the leader does every day.',
          intro='Great teams rarely come from a great plan alone. They come from a leader’s daily habits, the small, repeated choices that set the tone for everyone else. This article walks through five of those habits, why each one matters, and how to start practicing one of them this week.',
          ideas=['Set expectations nobody can misread', 'Raise feedback while problems are still small',
@@ -100,7 +101,7 @@ POSTS = [
     dict(slug='the-secret-to-scaling-your-business-without-sacrificing-quality',
          title='The secret to scaling your business without sacrificing quality',
          img='The-Secret-to-Scaling-Your-Business-Without-Sacrificing-Quality.jpg', pos='50% 50%',
-         alt='Close-up of hands reviewing paperwork at a desk',
+         alt='Close-up of hands reviewing paperwork at a desk', pain='growth',
          dek='Growth exposes every weak spot in how work gets done. Here’s how to keep the bar where it belongs.',
          intro='Most owners worry that growing means letting quality slip. It doesn’t have to. Quality that depends on one great person can’t scale, but quality that lives in your systems can. This piece covers how to protect the standard while the business gets bigger.',
          ideas=['Treat quality as a system, not a star employee', 'Define what good looks like before you hand work off',
@@ -109,7 +110,7 @@ POSTS = [
     dict(slug='balancing-leadership-and-life-proven-strategies-for-thriving-both-personally-and-professionally',
          title='Balancing leadership and life: strategies for thriving at work and at home',
          img='Balancing-Leadership-and-Life_-Proven-Strategies-for-Thriving-Both-Personally-and-Professionally.jpg',
-         pos='45% 35%', alt='A man in boxing gloves training',
+         pos='45% 35%', alt='A man in boxing gloves training', pain='stretched',
          dek='Leading a business and having a life aren’t opposing goals.',
          intro='Running a company can take everything you give it. The leaders who last are the ones who protect their energy, their attention and the people who matter most. This article shares practical ways to do that without letting the business slide.',
          ideas=['Plan around your energy, not only your calendar', 'Treat boundaries as part of leading',
@@ -185,10 +186,17 @@ def page_head(L, trail, h1, lede, image=None, pos='50% 40%', alt='', ctas=''):
     return f'<section class="page-head text-only" aria-label="Page introduction">{copy}</section>'
 
 
-def ctas(L, primary=('Book a consultation', BOOK), secondary=None):
+def chat_btn(label='Talk it through', pain=None, cls='btn btn-line'):
+    p = f' data-chat-pain="{pain}"' if pain else ''
+    return f'<button class="{cls}" type="button" data-chat{p}>{label}</button>'
+
+
+def ctas(L, primary=('Book a consultation', BOOK), secondary=None, chat=None):
     out = f'<div class="ctas"><a class="btn" href="{L(primary[1])}">{primary[0]}</a>'
     if secondary:
         out += f'<a class="btn btn-line" href="{L(secondary[1])}">{secondary[0]}</a>'
+    if chat is not None:
+        out += chat_btn(pain=chat or None)
     return out + '</div>'
 
 
@@ -380,6 +388,7 @@ def render(page):
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{root}assets/site.css">
+<link rel="stylesheet" href="{root}assets/leads.css">
 <script>(function(d){{try{{if(sessionStorage.getItem('mw-concept')==='hidden')d.classList.add('concept-hidden')}}catch(e){{}}if(!matchMedia('(prefers-reduced-motion: reduce)').matches){{d.classList.add('motion');setTimeout(function(){{if(!window.__mwMotion)d.classList.remove('motion')}},2500)}}}})(document.documentElement)</script>
 </head>
 <body data-root="{root}">
@@ -394,6 +403,7 @@ def render(page):
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/SplitText.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.27/dist/lenis.min.js" defer></script>
 <script src="{root}assets/site.js" defer></script>
+<script src="{root}assets/leads.js" defer></script>
 <script src="{root}assets/motion.js" defer></script>
 </body>
 </html>
@@ -444,7 +454,7 @@ def home(L):
       <h2 id="fitTitle">Start with what your week looks like.</h2>
       <p class="lede">Pick the line that sounds most like you. Each one points to the work that fixes it.</p>
       <div class="fit-options" role="tablist" aria-label="Coaching services" id="fitOptions"></div>
-      <p class="fit-foot">Not sure? <a class="link on-dark" href="{L('services/')}">See all services</a> or book a consultation and talk it through.</p>
+      <p class="fit-foot">Not sure? <a class="link on-dark" href="{L('bottleneck-check/')}">Take the 2-minute bottleneck check</a> or <a class="link on-dark" href="{L('services/')}">see all services</a>.</p>
     </div>
     <div class="fit-panel" role="tabpanel" id="fitPanel" aria-live="polite">
       <div class="fit-body" id="fitBody">
@@ -454,6 +464,16 @@ def home(L):
         <ul id="fitList"></ul>
         <a class="btn" id="fitLink" href="{L('services/')}">Explore</a>
       </div>
+    </div>
+  </div>
+</section>
+
+<section class="sec tight" aria-labelledby="startTitle">
+  <div class="wrap">
+    {sec_head('Not ready for a call? Start smaller.', 'Two easy ways to get a straight read on what’s holding the business back.').replace('<h2>', '<h2 id="startTitle">', 1)}
+    <div class="cards" style="--cols:2">
+      <a class="card text-card" href="{L('bottleneck-check/')}"><span class="body"><span class="meta">2 minutes, results right away</span><h3>Take the bottleneck check</h3><p>Eight quick statements that show where the business is leaning on you hardest, plus three first moves.</p><span class="more">Start the check</span></span></a>
+      <button class="card text-card" type="button" data-chat><span class="body"><span class="meta">A short conversation</span><h3>Tell Matt what’s going on</h3><p>Share what’s weighing on you in a few taps. Matt reads every one and replies personally within a day.</p><span class="more">Talk it through</span></span></button>
     </div>
   </div>
 </section>
@@ -655,7 +675,7 @@ def philosophy(L):
 @page('services/', 'Services', 'Executive coaching, leadership development, group coaching and keynote speaking with Matt Wilhelmsen.', 'services/')
 def services(L):
     cards = ''.join(card(L, s['path'], s['name'], s['blurb'], more='Explore') for s in SERVICES)
-    return f'''{page_head(L, [('Services', 'services/')], 'Four ways to work with Matt.', 'From private coaching for the CEO to keynotes for a full room, every engagement is built around where your business is now.', 'workshop.jpg', '50% 35%', 'Matt leading a working session with a client team', ctas(L))}
+    return f'''{page_head(L, [('Services', 'services/')], 'Four ways to work with Matt.', 'From private coaching for the CEO to keynotes for a full room, every engagement is built around where your business is now.', 'workshop.jpg', '50% 35%', 'Matt leading a working session with a client team', ctas(L, chat=''))}
 <section class="sec">
   <div class="wrap">
     {sec_head('Choose your starting point', 'Most clients start with one service and add others as the business grows.')}
@@ -683,7 +703,7 @@ def one_on_one(L):
            ('One-on-one leadership coaching', 'Sessions built around you to sharpen clarity, confidence and decision-making.'),
            ('Team integration', 'The work extends to your team to improve collaboration, alignment and communication.'),
            ('Whole-team coaching', 'Ongoing sessions focused on scale and steady improvement, tracked against measurable results.')]
-    return f'''{page_head(L, [('Services', 'services/'), ('One-on-one coaching', 'services/one-on-one-coaching/')], 'Get out of the bottleneck.', 'Private coaching for business owners and CEOs. Your goals, your challenges and a plan you actually carry out.', 'one-on-one-1.jpg', '62% 30%', 'Matt in a one-on-one session with a client', ctas(L))}
+    return f'''{page_head(L, [('Services', 'services/'), ('One-on-one coaching', 'services/one-on-one-coaching/')], 'Get out of the bottleneck.', 'Private coaching for business owners and CEOs. Your goals, your challenges and a plan you actually carry out.', 'one-on-one-1.jpg', '62% 30%', 'Matt in a one-on-one session with a client', ctas(L, chat='decisions'))}
 <section class="sec">
   <div class="wrap">
     {sec_head('Areas of focus', 'Sessions center on the decisions and habits that have the biggest effect on you and your company.')}
@@ -713,7 +733,7 @@ def leadership(L):
     outcomes = [('Stronger leaders', 'Sharper skills and a practical toolkit for leading with impact.'),
                 ('Confidence through change', 'Leaders who can guide the company through growth and uncertainty.'),
                 ('Better collaboration', 'Teams that work together and reach more of their potential.')]
-    return f'''{page_head(L, [('Services', 'services/'), ('Leadership development', 'services/leadership-development/')], 'Build a bench you can trust.', 'Leadership is influence and vision, not a title. Develop leaders who inspire their teams, encourage new ideas and deliver results.', 'Interior-Banner.png', '62% 40%', 'Matt working with a leadership team around a conference table', ctas(L))}
+    return f'''{page_head(L, [('Services', 'services/'), ('Leadership development', 'services/leadership-development/')], 'Build a bench you can trust.', 'Leadership is influence and vision, not a title. Develop leaders who inspire their teams, encourage new ideas and deliver results.', 'Interior-Banner.png', '62% 40%', 'Matt working with a leadership team around a conference table', ctas(L, chat='leaders'))}
 <section class="sec">
   <div class="wrap">
     {sec_head('Areas of focus', 'The skills that separate leaders who manage tasks from leaders who move a company.')}
@@ -737,7 +757,7 @@ def group(L):
     outcomes = [('A stronger culture', 'More synergy and mutual respect across the team.'),
                 ('Real alignment', 'Shared clarity on roles, goals and expectations.'),
                 ('Practical strategies', 'Concrete plans built to produce results, not just good meetings.')]
-    return f'''{page_head(L, [('Services', 'services/'), ('Group coaching', 'services/group-coaching/')], 'Get the whole team pulling one way.', 'Coaching for teams that need to work better together, whether they’re working through friction or chasing a shared goal.', 'group-coaching.jpg', '55% 30%', 'A team in a group coaching session', ctas(L))}
+    return f'''{page_head(L, [('Services', 'services/'), ('Group coaching', 'services/group-coaching/')], 'Get the whole team pulling one way.', 'Coaching for teams that need to work better together, whether they’re working through friction or chasing a shared goal.', 'group-coaching.jpg', '55% 30%', 'A team in a group coaching session', ctas(L, chat='alignment'))}
 <section class="sec">
   <div class="wrap">
     {sec_head('Areas of focus', 'Where group coaching makes the biggest difference.')}
@@ -827,7 +847,7 @@ def blogs(L):
 def guides(L):
     lis = ''.join(f'''<li class="guide"><span class="doc" aria-hidden="true"></span>
         <div><h3>{t}</h3><p>{d}</p></div>
-        <a class="btn btn-line btn-sm" href="{U}{f}" download>Download PDF</a></li>''' for t, d, f in GUIDES)
+        <a class="btn btn-line btn-sm" href="{U}{f}" data-guide="{t}" download>Download PDF</a></li>''' for t, d, f in GUIDES)
     return f'''{page_head(L, [('Resources', 'resources/'), ('Downloadable guides', 'resources/downloadable-guides/')], 'Free tools for leading better.', 'Playbooks and checklists for stronger leadership and a business that scales. Download, print and put them to work.')}
 <section class="sec tight" style="padding-top:0">
   <div class="wrap"><ul class="guides">{lis}</ul></div>
@@ -860,6 +880,7 @@ def post_page(p):
         <h2>The short version</h2>
         {checks(p['ideas'])}
         <p style="margin-top:2rem"><a class="btn btn-line" href="https://www.mattwil.com/{p['slug']}/">Read the full article</a></p>
+        <div class="callout"><h3>Sound familiar?</h3><p>If this is showing up in your business right now, tell Matt what’s going on. He reads every one and replies personally.</p>{chat_btn('Talk it through', p.get('pain'), 'btn')}</div>
       </div>
       <aside class="aside">
         <h3>More from the blog</h3>
@@ -988,7 +1009,8 @@ def contact_matt(L):
     <div class="form-card">
       <h2>Send a message</h2>
       <p>Fields marked optional can be left blank.</p>
-      <form class="form" data-mailto="{EMAIL}" data-subject="Website message" novalidate>
+      <form class="form" data-lead="contact" novalidate>
+        <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
         <div class="field"><label for="cm-name">Name</label><input id="cm-name" name="name" data-label="Name" autocomplete="name" required></div>
         <div class="field"><label for="cm-email">Email</label><input id="cm-email" name="email" data-label="Email" type="email" autocomplete="email" required></div>
         <div class="field"><label for="cm-company">Company <span class="opt">(optional)</span></label><input id="cm-company" name="company" data-label="Company" autocomplete="organization"></div>
@@ -998,8 +1020,8 @@ def contact_matt(L):
             <option>One-on-one coaching</option><option>Leadership development</option><option>Group coaching</option><option>Public speaking</option><option>Something else</option>
           </select></div>
         <div class="field full"><label for="cm-msg">Message</label><textarea id="cm-msg" name="message" data-label="Message" required></textarea></div>
-        <div class="actions"><button class="btn" type="submit">Send message</button><p class="note">Opens a pre-filled email to Matt.</p></div>
-        <p class="done" hidden>Your email app should open with the message ready to send. If it doesn’t, write to {EMAIL}.</p>
+        <div class="actions"><button class="btn" type="submit">Send message</button><p class="note">Goes straight to Matt. He replies within one business day.</p></div>
+        <p class="form-err" hidden></p>
       </form>
     </div>
   </div>
@@ -1023,7 +1045,8 @@ def book(L):
       <p style="margin-top:1.5rem">Prefer to call? <a class="inline-link" href="tel:{TEL}">{PHONE}</a></p>
     </div>
     <div class="form-card" style="background:var(--mist)">
-      <form class="form" data-mailto="{EMAIL}" data-subject="Consultation request" novalidate>
+      <form class="form" data-lead="booking" novalidate>
+        <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
         <div class="field"><label for="bk-name">Name</label><input id="bk-name" name="name" data-label="Name" autocomplete="name" required></div>
         <div class="field"><label for="bk-email">Email</label><input id="bk-email" name="email" data-label="Email" type="email" autocomplete="email" required></div>
         <div class="field"><label for="bk-company">Company <span class="opt">(optional)</span></label><input id="bk-company" name="company" data-label="Company" autocomplete="organization"></div>
@@ -1035,11 +1058,19 @@ def book(L):
           </div></fieldset>
         <div class="field full"><label for="bk-times">Good days and times <span class="opt">(optional)</span></label><input id="bk-times" name="times" data-label="Availability" placeholder="Tuesday or Thursday mornings"></div>
         <div class="field full"><label for="bk-msg">What’s going on in your business?</label><textarea id="bk-msg" name="message" data-label="What’s going on" required></textarea></div>
-        <div class="actions"><button class="btn" type="submit">Request a consultation</button><p class="note">Opens a pre-filled email to Matt.</p></div>
-        <p class="done" hidden>Your email app should open with the request ready to send. If it doesn’t, write to {EMAIL}.</p>
+        <div class="actions"><button class="btn" type="submit">Request a consultation</button><p class="note">Matt replies personally to confirm a time.</p></div>
+        <p class="form-err" hidden></p>
       </form>
     </div>
   </div>
+</section>'''
+
+
+@page('bottleneck-check/', 'Bottleneck check', 'Eight quick statements that show where your business leans on you hardest, with three first moves. Free, about two minutes.', 'resources/')
+def bottleneck(L):
+    return f'''{page_head(L, [('Resources', 'resources/'), ('Bottleneck check', 'bottleneck-check/')], 'Find what’s really holding the business back.', 'Eight quick statements, about two minutes. You’ll see your biggest constraint and three first moves right away.')}
+<section class="sec tight" style="padding-top:0">
+  <div class="wrap"><div class="check" id="check" aria-live="polite"><noscript><p>The check needs JavaScript. You can <a class="inline-link" href="{L(BOOK)}">book a free consultation</a> instead.</p></noscript></div></div>
 </section>'''
 
 

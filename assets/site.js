@@ -23,7 +23,9 @@
     toggle.addEventListener('click',function(){
       var open=toggle.getAttribute('aria-expanded')==='true';
       toggle.setAttribute('aria-expanded',String(!open));toggle.textContent=open?'Menu':'Close';
-      mnav.hidden=open;
+      var M=window.MWMotion;
+      if(open){ if(M)M.closeMenu(function(){mnav.hidden=true;}); else mnav.hidden=true; }
+      else { mnav.hidden=false; if(M)M.openMenu(); }
     });
   }
 

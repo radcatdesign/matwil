@@ -434,14 +434,25 @@ h3{font-size:var(--t-h3);line-height:1.2;letter-spacing:-.016em;font-stretch:100
 }
 
 /* one orchestrated entrance per page */
+/* CSS fallback entrance, used only when the GSAP layer isn't running */
 @media (prefers-reduced-motion:no-preference){
-  .hero-copy>*,.ph-copy>*{animation:rise .9s var(--ease) both}
-  .hero-copy>:nth-child(2),.ph-copy>:nth-child(3){animation-delay:.1s}
-  .hero-copy>:nth-child(3),.ph-copy>:nth-child(4){animation-delay:.2s}
-  .hero .slant,.page-head .slant{animation:cut 1.15s var(--ease-io) .1s both}
+  html:not(.motion) .hero-copy>*,html:not(.motion) .ph-copy>*{animation:rise .9s var(--ease) both}
+  html:not(.motion) .hero-copy>:nth-child(2),html:not(.motion) .ph-copy>:nth-child(3){animation-delay:.1s}
+  html:not(.motion) .hero-copy>:nth-child(3),html:not(.motion) .ph-copy>:nth-child(4){animation-delay:.2s}
+  html:not(.motion) .hero .slant,html:not(.motion) .page-head .slant{animation:cut 1.15s var(--ease-io) .1s both}
   @keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:none}}
   @keyframes cut{from{clip-path:polygon(100% 0,100% 0,100% 100%,calc(100% - var(--cut)) 100%)}to{clip-path:polygon(var(--cut) 0,100% 0,100% 100%,0 100%)}}
 }
+
+/* GSAP motion layer (assets/motion.js). html.motion is set in the head only when
+   motion is allowed; it hides the first screen until the entrance timeline runs. */
+.motion .hero-copy>*,.motion .ph-copy>*,.motion .hero .slant,.motion .page-head .slant{visibility:hidden}
+.split-line-mask{padding:.02em 0 .12em;margin:-.02em 0 -.12em}
+.rule-x{position:absolute;left:0;right:0;pointer-events:none;transform-origin:0 50%;z-index:1}
+html.lenis,html.lenis body{height:auto}
+.lenis.lenis-smooth{scroll-behavior:auto !important}
+.lenis.lenis-stopped{overflow:clip}
+.lenis.lenis-smooth iframe{pointer-events:none}
 
 /* responsive */
 @media (max-width:1140px){

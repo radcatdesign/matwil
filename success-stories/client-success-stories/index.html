@@ -13,7 +13,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..800&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400;1,8..60,500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../assets/site.css">
-<script>try{if(sessionStorage.getItem('mw-concept')==='hidden')document.documentElement.classList.add('concept-hidden')}catch(e){}</script>
+<script>(function(d){try{if(sessionStorage.getItem('mw-concept')==='hidden')d.classList.add('concept-hidden')}catch(e){}if(!matchMedia('(prefers-reduced-motion: reduce)').matches){d.classList.add('motion');setTimeout(function(){if(!window.__mwMotion)d.classList.remove('motion')},2500)}})(document.documentElement)</script>
 </head>
 <body data-root="../../">
 <a class="skip" href="#main">Skip to content</a>
@@ -79,6 +79,11 @@
     </div>
   </div>
 </footer>
-<script src="../../assets/site.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/SplitText.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.3.27/dist/lenis.min.js" defer></script>
+<script src="../../assets/site.js" defer></script>
+<script src="../../assets/motion.js" defer></script>
 </body>
 </html>

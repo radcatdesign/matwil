@@ -15,7 +15,8 @@ Every page in the current mattwil.com sitemap is rebuilt here, at the same paths
 
 - `tools/build.py` holds all page copy and templates. Edit it, then run `python3 tools/build.py` to regenerate every `index.html`.
 - `assets/site.css` and `assets/site.js` are shared by every page.
-- Plain static HTML, no framework. GitHub Pages serves it as is.
+- `assets/motion.js` is the GSAP layer: split-line type reveals, image wipes, hairlines drawing in, staggered menus and Lenis smooth scrolling on desktop. It switches off for visitors who prefer reduced motion, and if the CDN fails the page falls back to a simple CSS entrance.
+- Plain static HTML, no framework. GSAP 3.15 and Lenis load from jsDelivr. GitHub Pages serves it as is.
 
 ## Before launch
 

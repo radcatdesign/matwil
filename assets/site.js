@@ -79,13 +79,13 @@
         if(n!==null){e.preventDefault();select(n);opts.children[n].focus();}
       });
       opts.appendChild(b);
-      var im=document.createElement('img');im.src=U+s.img;im.alt=s.alt;im.loading=i?'lazy':'eager';media.appendChild(im);
+      if(media){var im=document.createElement('img');im.src=U+s.img;im.alt=s.alt;im.loading=i?'lazy':'eager';media.appendChild(im);}
     });
     function select(i){
       if(i===current)return;
       var s=services[i],first=current<0;current=i;
       [].forEach.call(opts.children,function(b,j){b.setAttribute('aria-selected',j===i?'true':'false');b.tabIndex=j===i?0:-1;});
-      [].forEach.call(media.children,function(im,j){im.classList.toggle('on',j===i);});
+      if(media)[].forEach.call(media.children,function(im,j){im.classList.toggle('on',j===i);});
       document.getElementById('fitPanel').setAttribute('aria-labelledby','fit-tab-'+i);
       document.getElementById('fitSvc').textContent=s.name;
       document.getElementById('fitTitle2').textContent=s.title;

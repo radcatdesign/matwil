@@ -91,7 +91,7 @@
       var tl=imageReveal(w);
       ScrollTrigger.create({trigger:w,start:'top 90%',once:true,onEnter:function(){tl.play();}});
     });
-    var close=document.querySelector('.close');
+    var close=document.querySelector('.close:not(.plain)');
     if(close){
       gsap.fromTo(close,{backgroundPosition:'50% 30%'},{backgroundPosition:'50% 85%',ease:'none',
         scrollTrigger:{trigger:close,start:'top bottom',end:'bottom top',scrub:true}});

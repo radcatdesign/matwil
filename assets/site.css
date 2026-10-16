@@ -217,6 +217,9 @@ h3{font-size:var(--t-h3);line-height:1.2;letter-spacing:-.016em;font-stretch:100
 .card p{margin:0;font-size:1rem}
 .card .more{margin-top:auto;padding-top:.8rem;font-family:var(--display);font-stretch:100%;font-weight:600;font-size:.875rem;letter-spacing:.01em;color:var(--spruce);transition:color .3s}
 .card:hover .more{color:var(--ink)}
+.card .meta{font-family:var(--display);font-stretch:100%;font-size:.8125rem;font-weight:500;letter-spacing:.01em;color:var(--muted)}
+.text-card .body{padding:clamp(1.6rem,2.4vw,2.1rem) clamp(1.4rem,2vw,1.8rem) clamp(1.6rem,2.4vw,2rem);gap:.65rem}
+.text-card h3{font-size:clamp(1.3rem,1.1rem + .6vw,1.6rem);letter-spacing:-.025em;line-height:1.15}
 .card:hover::before,.card:focus-visible::before{transform:scaleX(1)}
 
 /* images inside links */
@@ -314,6 +317,7 @@ h3{font-size:var(--t-h3);line-height:1.2;letter-spacing:-.016em;font-stretch:100
 .post p{margin:.4rem 0 0;font-size:1rem;color:var(--muted);transition:transform .55s var(--ease)}
 .post a:hover h3{color:var(--spruce)}
 .post a:hover::after,.post a:focus-visible::after{transform:scaleX(1);transform-origin:left}
+.posts.text .post a{grid-template-columns:1fr auto}
 
 /* article */
 .article-hero{margin:0 0 clamp(40px,5vw,64px)}
@@ -390,6 +394,10 @@ h3{font-size:var(--t-h3);line-height:1.2;letter-spacing:-.016em;font-stretch:100
 /* closing band */
 .close{position:relative;min-height:min(92vh,720px);display:flex;align-items:flex-start;color:#fff;background:#2a2238 url("https://www.mattwil.com/wp-content/uploads/footer.jpg") center 70%/cover no-repeat;clip-path:polygon(0 4vw,100% 0,100% 100%,0 100%);margin-top:-4vw}
 .close::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(12,38,26,.82) 0%,rgba(12,38,26,.45) 45%,rgba(12,38,26,0) 72%)}
+.close.plain{background:var(--spruce);min-height:0}
+.close.plain::before{display:none}
+.close.plain .wrap{padding-bottom:clamp(80px,9vw,128px)}
+.close.plain .lede{color:#DCEBE2}
 .close .wrap{position:relative;width:100%;padding-top:calc(clamp(88px,10vw,136px) + 4vw)}
 .close h2{color:#fff;font-size:clamp(2.5rem,1.5rem + 3.8vw,4.5rem);font-weight:650;font-stretch:106%;letter-spacing:-.042em;line-height:.98;max-width:10em;margin-bottom:.45em}
 .close .lede{color:#E3ECE6;max-width:30em}
@@ -503,6 +511,7 @@ html.lenis,html.lenis body{height:auto}
   .story.small .ph{aspect-ratio:16/10}
   .values ul{grid-template-columns:1fr 1fr}
   .post a{grid-template-columns:96px 1fr;gap:1rem}
+  .posts.text .post a{grid-template-columns:1fr}
   .post .ph{width:96px}
   .post .more,.post p{display:none}
   .cards,.quotes,.books{grid-template-columns:1fr;--cols:1 !important}

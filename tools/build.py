@@ -211,9 +211,11 @@ def rows(pairs, big=False):
     return f'<div class="{cls}">' + ''.join(f'<div><h3>{h}</h3><p>{p}</p></div>' for h, p in pairs) + '</div>'
 
 
-def card(L, path, title, text, image=None, pos=None, alt='', more='Learn more'):
+def card(L, path, title, text, image=None, pos=None, alt='', more='Learn more', meta=None):
     ph = f'<span class="ph">{img(image, alt, pos)}</span>' if image else ''
-    return (f'<a class="card" href="{L(path)}">{ph}<span class="body"><h3>{title}</h3>'
+    cls = 'card' if image else 'card text-card'
+    m = f'<span class="meta">{meta}</span>' if meta else ''
+    return (f'<a class="{cls}" href="{L(path)}">{ph}<span class="body">{m}<h3>{title}</h3>'
             f'<p>{text}</p><span class="more">{more}</span></span></a>')
 
 
@@ -229,8 +231,9 @@ def proof(stats):
     return f'<section class="{cls}" aria-label="At a glance"><ul class="wrap">{lis}</ul></section>'
 
 
-def close_band(L):
-    return f'''<section class="close" aria-labelledby="closeTitle">
+def close_band(L, photo=False):
+    cls = 'close' if photo else 'close plain'
+    return f'''<section class="{cls}" aria-labelledby="closeTitle">
   <div class="wrap">
     <h2 id="closeTitle">Let’s build what’s next.</h2>
     <p class="lede">Start with a consultation. Bring the problem that keeps landing on your desk and leave with a clearer next step.</p>
@@ -264,8 +267,9 @@ def story_card(L, s, kind='small'):
 
 
 def stories_block(L):
-    return ('<div class="stories">' + story_card(L, STORIES[0], 'big') + story_card(L, STORIES[1]) +
-            story_card(L, STORIES[2]) + '</div>')
+    return '<div class="cards" style="--cols:3">' + ''.join(
+        card(L, 'success-story/' + s['slug'] + '/', s['title'], s['summary'], more='Read the story', meta=s['client'])
+        for s in STORIES) + '</div>'
 
 
 def post_list(L, posts=POSTS, with_dek=False):
@@ -273,9 +277,8 @@ def post_list(L, posts=POSTS, with_dek=False):
     for p in posts:
         dek = f'<p>{p["dek"]}</p>' if with_dek else ''
         out.append(f'''<li class="post"><a href="{L(p['slug'] + '/')}">
-        <span class="ph">{img(p['img'], '', p['pos'])}</span>
         <div><h3>{p['title']}</h3>{dek}</div><span class="more">Read article</span></a></li>''')
-    return '<ul class="posts">' + ''.join(out) + '</ul>'
+    return '<ul class="posts text">' + ''.join(out) + '</ul>'
 
 
 def feature_quote(L, link=True):
@@ -361,7 +364,7 @@ def render(page):
     root = '../' * path.count('/')
     title = page['title'] if path == '' else f"{page['title']} | Matt Wilhelmsen"
     body = page['body'](L)
-    close = close_band(L) if page.get('close', True) else ''
+    close = close_band(L, photo=(path == '')) if page.get('close', True) else ''
     return f'''<!doctype html>
 <html lang="en">
 <head>
@@ -444,7 +447,6 @@ def home(L):
       <p class="fit-foot">Not sure? <a class="link on-dark" href="{L('services/')}">See all services</a> or book a consultation and talk it through.</p>
     </div>
     <div class="fit-panel" role="tabpanel" id="fitPanel" aria-live="polite">
-      <div class="fit-media" id="fitMedia"></div>
       <div class="fit-body" id="fitBody">
         <div class="svc" id="fitSvc"></div>
         <h3 id="fitTitle2"></h3>
@@ -502,13 +504,13 @@ def home(L):
 @page('about/', 'About', 'Who Matt Wilhelmsen is, what he believes and how he coaches business owners and leadership teams.', 'about/')
 def about(L):
     subs = [
-        ('about/mission-values/', 'Mission &amp; values', 'Why the work exists and the six values behind it.', 'Interior-Banner.png', '62% 40%', 'Matt working with a client team'),
-        ('about/background-experience/', 'Background &amp; experience', 'Three generations of family business and more than a decade of coaching.', 'MattWill_Hero-scaled-e1773687387871.jpg', '76% 30%', 'Portrait of Matt Wilhelmsen'),
-        ('about/differentiator-why-matt/', 'Why Matt', 'What clients say makes working with him different.', 'image-11.png', '45% 30%', 'Matt presenting to a group'),
-        ('about/philosophy-approach/', 'Philosophy &amp; approach', 'The beliefs and frameworks behind every engagement.', 'image-10.png', '50% 40%', 'Matt in conversation with a client'),
+        ('about/mission-values/', 'Mission &amp; values', 'Why the work exists and the six values behind it.'),
+        ('about/background-experience/', 'Background &amp; experience', 'Three generations of family business and more than a decade of coaching.'),
+        ('about/differentiator-why-matt/', 'Why Matt', 'What clients say makes working with him different.'),
+        ('about/philosophy-approach/', 'Philosophy &amp; approach', 'The beliefs and frameworks behind every engagement.'),
     ]
-    cards = ''.join(card(L, p, t, d, i, pos, a) for p, t, d, i, pos, a in subs)
-    return f'''{page_head(L, [('About', 'about/')], 'A coach who has run the business, not just studied it.', 'Third-generation entrepreneur, former E-Myth Worldwide coach and a straight talker. Here’s who Matt is, what he believes and how he works.', 'Matt-Approach-IMG.jpg', '70% 30%', 'Matt Wilhelmsen working at a table with a laptop', ctas(L))}
+    cards = ''.join(card(L, p, t, d) for p, t, d in subs)
+    return f'''{page_head(L, [('About', 'about/')], 'A coach who has run the business, not just studied it.', 'Third-generation entrepreneur, former E-Myth Worldwide coach and a straight talker. Here’s who Matt is, what he believes and how he works.', ctas=ctas(L))}
 {proof([('150+', 'businesses coached'), ('10+ years', 'of hands-on coaching'), ('3 generations', 'of entrepreneurs in the family')])}
 <section class="sec">
   <div class="wrap">
@@ -517,14 +519,13 @@ def about(L):
   </div>
 </section>
 <section class="sec white">
-  <div class="wrap split center">
+  <div class="wrap split">
+    <h2 style="max-width:10em">Focus beats doing more.</h2>
     <div>
-      <h2 style="max-width:10em;margin-bottom:.6em">Focus beats doing more.</h2>
       <p class="lede">Matt’s view is simple. Most businesses don’t need more activity. They need clearer direction, leaders who own their part, and systems that handle the routine so people can do their best work.</p>
       <p>That’s what the coaching builds, whether it’s one-on-one with the owner or with the whole leadership team.</p>
       <p style="margin-top:1.75rem"><a class="link" href="{L('services/')}">See how you can work together</a></p>
     </div>
-    <figure class="photo">{img('workshop.jpg', 'Matt leading a working session with a client team', '50% 35%')}</figure>
   </div>
 </section>'''
 
@@ -539,7 +540,7 @@ def mission(L):
         ('Adaptability', 'Treat change as an opening. Stay flexible and resilient.'),
         ('Endless growth', 'Keep learning and improving. There is no finish line.'),
     ]
-    return f'''{page_head(L, [('About', 'about/'), ('Mission &amp; values', 'about/mission-values/')], 'Grow on purpose.', 'Help small and mid-sized businesses grow with systems, processes and people that fit what the owner actually values.', 'Interior-Banner.png', '62% 40%', 'Matt working with a client team at a conference table')}
+    return f'''{page_head(L, [('About', 'about/'), ('Mission &amp; values', 'about/mission-values/')], 'Grow on purpose.', 'Help small and mid-sized businesses grow with systems, processes and people that fit what the owner actually values.')}
 <section class="sec">
   <div class="wrap split">
     <h2 style="max-width:9em">The mission</h2>
@@ -560,7 +561,7 @@ def mission(L):
 
 @page('about/background-experience/', 'Background &amp; experience', 'Matt Wilhelmsen’s family business roots, operating experience and coaching track record.', 'about/')
 def background(L):
-    return f'''{page_head(L, [('About', 'about/'), ('Background &amp; experience', 'about/background-experience/')], 'Raised around family business. Built teams before coaching them.', 'Three generations of entrepreneurs, years of running operations and more than a decade of coaching owners and leadership teams.', 'MattWill_Hero-scaled-e1773687387871.jpg', '76% 30%', 'Matt Wilhelmsen smiling with arms crossed in front of a bookshelf')}
+    return f'''{page_head(L, [('About', 'about/'), ('Background &amp; experience', 'about/background-experience/')], 'Raised around family business. Built teams before coaching them.', 'Three generations of entrepreneurs, years of running operations and more than a decade of coaching owners and leadership teams.')}
 {proof([('150+', 'businesses coached'), ('10+ years', 'in the work'), ('3 generations', 'of family businesses')])}
 <section class="sec">
   <div class="wrap split">
@@ -578,10 +579,9 @@ def background(L):
   </div>
 </section>
 <section class="sec">
-  <div class="wrap split center">
-    <figure class="photo">{img('image-11.png', 'Matt presenting at a whiteboard to a seated group', '45% 30%')}</figure>
+  <div class="wrap split">
+    <h2 style="max-width:9em">Why he does this</h2>
     <div>
-      <h2 style="max-width:9em;margin-bottom:.6em">Why he does this</h2>
       <p class="lede">Strong businesses share three things: clear leaders, teams that trust each other, and systems that take care of the routine.</p>
       <p>Matt’s job is to help owners build all three, so the company can grow without running through one person.</p>
       <p style="margin-top:1.75rem"><a class="link" href="{L('about/philosophy-approach/')}">Read his philosophy</a></p>
@@ -601,7 +601,7 @@ def why(L):
         ('Honest conversations', 'Direct, candid feedback. You hear what you need to hear, not what’s comfortable.'),
         ('Proven team impact', 'A track record of scalable systems, stronger collaboration and more resilient teams.'),
     ]
-    return f'''{page_head(L, [('About', 'about/'), ('Why Matt', 'about/differentiator-why-matt/')], 'Plenty of people coach. Here’s what’s different.', 'Practical, honest and built around your business, with results that outlast the engagement.', 'image-11.png', '45% 30%', 'Matt presenting at a whiteboard to a seated group')}
+    return f'''{page_head(L, [('About', 'about/'), ('Why Matt', 'about/differentiator-why-matt/')], 'Plenty of people coach. Here’s what’s different.', 'Practical, honest and built around your business, with results that outlast the engagement.')}
 <section class="sec">
   <div class="wrap">
     {sec_head('Seven reasons clients choose Matt', 'What owners and leadership teams point to when they explain why the work landed.')}
@@ -624,7 +624,7 @@ def philosophy(L):
     frameworks = ['A defined vision used as a real management tool', 'Measurable indicators, documented and tracked over time',
                   'Communication channels built for teamwork and transparency', 'Growth-mindset habits that build adaptability',
                   'Scalable systems for day-to-day operations', 'Values-driven models that tie culture to strategy']
-    return f'''{page_head(L, [('About', 'about/'), ('Philosophy &amp; approach', 'about/philosophy-approach/')], 'Clarity. Honesty. Action.', 'Leadership and growth come down to those three things. Here’s how they show up in the work.', 'image-10.png', '50% 40%', 'Matt in a coaching conversation with a client')}
+    return f'''{page_head(L, [('About', 'about/'), ('Philosophy &amp; approach', 'about/philosophy-approach/')], 'Clarity. Honesty. Action.', 'Leadership and growth come down to those three things. Here’s how they show up in the work.')}
 <section class="sec">
   <div class="wrap">
     {sec_head('Philosophy', 'Four beliefs that shape every engagement.')}
@@ -654,7 +654,7 @@ def philosophy(L):
 
 @page('services/', 'Services', 'Executive coaching, leadership development, group coaching and keynote speaking with Matt Wilhelmsen.', 'services/')
 def services(L):
-    cards = ''.join(card(L, s['path'], s['name'], s['blurb'], s['img'], s['pos'], s['alt'], 'Explore') for s in SERVICES)
+    cards = ''.join(card(L, s['path'], s['name'], s['blurb'], more='Explore') for s in SERVICES)
     return f'''{page_head(L, [('Services', 'services/')], 'Four ways to work with Matt.', 'From private coaching for the CEO to keynotes for a full room, every engagement is built around where your business is now.', 'workshop.jpg', '50% 35%', 'Matt leading a working session with a client team', ctas(L))}
 <section class="sec">
   <div class="wrap">
@@ -801,7 +801,7 @@ def resources(L):
             ('resources/downloadable-guides/', 'Downloadable guides', 'Free playbooks and checklists you can put to work this week.'),
             ('resources/recommended-reading/', 'Recommended reading', 'Nine books every leader should know, grouped by what they’ll help with.')]
     cards = ''.join(card(L, p, t, d, more='Open') for p, t, d in subs)
-    return f'''{page_head(L, [('Resources', 'resources/')], 'Keep sharpening.', 'Articles, free guides and a reading list for leaders who want to keep getting better between sessions.', 'Matt-Approach-IMG.jpg', '70% 30%', 'Matt Wilhelmsen working at a table with a laptop')}
+    return f'''{page_head(L, [('Resources', 'resources/')], 'Keep sharpening.', 'Articles, free guides and a reading list for leaders who want to keep getting better between sessions.')}
 <section class="sec">
   <div class="wrap">
     <div class="cards" style="--cols:3">{cards}</div>
@@ -840,7 +840,7 @@ def reading(L):
     for g, books in BOOKS:
         bk = ''.join(f'<div class="book"><h3>{t}</h3><div class="by">{a}</div><p>{n}</p></div>' for t, a, n in books)
         groups.append(f'<div class="book-group"><h2>{g}</h2>{bk}</div>')
-    return f'''{page_head(L, [('Resources', 'resources/'), ('Recommended reading', 'resources/recommended-reading/')], 'Books every leader should know.', 'A short reading list for leadership, business growth and personal development, kept up to date.', 'Interior-Banner.png', '62% 40%', 'Matt working with a client team')}
+    return f'''{page_head(L, [('Resources', 'resources/'), ('Recommended reading', 'resources/recommended-reading/')], 'Books every leader should know.', 'A short reading list for leadership, business growth and personal development, kept up to date.')}
 <section class="sec">
   <div class="wrap"><div class="books">{''.join(groups)}</div></div>
 </section>'''
@@ -889,7 +889,7 @@ def success(L):
 <section class="sec white">
   <div class="wrap">
     {sec_head('Client stories', 'Three engagements, from a small business to a multi-leader organization.')}
-    <div class="story-list">{''.join(story_card(L, s, 'wide') for s in STORIES)}</div>
+    {stories_block(L)}
   </div>
 </section>'''
 
@@ -898,7 +898,7 @@ def success(L):
 def client_stories(L):
     return f'''{page_head(L, [('Success stories', 'success-stories/'), ('Client success stories', 'success-stories/client-success-stories/')], 'Client success stories', 'The challenge, what changed and the result, from owners and leadership teams Matt has worked with.')}
 <section class="sec tight" style="padding-top:0">
-  <div class="wrap"><div class="story-list">{''.join(story_card(L, s, 'wide') for s in STORIES)}</div></div>
+  <div class="wrap">{stories_block(L)}</div>
 </section>'''
 
 
@@ -912,7 +912,7 @@ def story_page(i, s):
                   if next_s else f'<a class="next" href="{L("success-stories/client-success-stories/")}"><span>Back to</span><strong><span class="uline">All client stories</span></strong></a>')
         chips = f'<div class="chips"><span class="chip">{s["client"]}</span><span class="chip">{s["tag"]}</span></div>'
         head = page_head(L, [('Success stories', 'success-stories/'), ('Client success stories', 'success-stories/client-success-stories/'), (s['title'], 'success-story/' + s['slug'] + '/')],
-                         s['title'], s['summary'], s['img'], s['pos'], s['alt'], chips)
+                         s['title'], s['summary'], ctas=chips)
         return f'''{head}
 <section class="sec">
   <div class="wrap">
@@ -956,8 +956,8 @@ def testimonials(L):
 
 @page('contact/', 'Contact', 'Contact business and executive coach Matt Wilhelmsen or book a free consultation.', 'contact/', close=False)
 def contact(L):
-    cards = (card(L, BOOK, 'Book a session', 'A free 30-minute conversation by phone or video to talk through what’s going on in your business.', 'Matt-Approach-IMG.jpg', '70% 30%', 'Matt at a table with a laptop', 'Book a session') +
-             card(L, 'contact/contact-matt/', 'Contact Matt', 'Questions about coaching, speaking or anything else. Send a note and Matt will get back to you.', 'one-on-one-1.jpg', '62% 30%', 'Matt in conversation with a client', 'Send a message'))
+    cards = (card(L, BOOK, 'Book a session', 'A free 30-minute conversation by phone or video to talk through what’s going on in your business.', more='Book a session') +
+             card(L, 'contact/contact-matt/', 'Contact Matt', 'Questions about coaching, speaking or anything else. Send a note and Matt will get back to you.', more='Send a message'))
     return f'''{page_head(L, [('Contact', 'contact/')], 'Let’s talk.', 'Book a free consultation or send Matt a note. Either way, you’ll hear back from him directly.')}
 <section class="sec tight" style="padding-top:0">
   <div class="wrap contact-grid">
@@ -973,7 +973,7 @@ def contact(L):
 
 @page('contact/contact-matt/', 'Contact Matt', 'Send Matt Wilhelmsen a message about coaching, leadership development or speaking.', 'contact/', close=False)
 def contact_matt(L):
-    return f'''{page_head(L, [('Contact', 'contact/'), ('Contact Matt', 'contact/contact-matt/')], 'Contact Matt', 'Questions about coaching, speaking or working together. Send a note and Matt will reply personally.', 'MattWill_Hero-scaled-e1773687387871.jpg', '76% 30%', 'Matt Wilhelmsen smiling with arms crossed')}
+    return f'''{page_head(L, [('Contact', 'contact/'), ('Contact Matt', 'contact/contact-matt/')], 'Contact Matt', 'Questions about coaching, speaking or working together. Send a note and Matt will reply personally.')}
 <section class="sec tight">
   <div class="wrap contact-grid">
     <div>
@@ -1008,7 +1008,7 @@ def contact_matt(L):
 
 @page('contact/book-a-session/', 'Book a session', 'Book a free 30-minute consultation with Matt Wilhelmsen by phone or video.', 'contact/', close=False)
 def book(L):
-    return f'''{page_head(L, [('Contact', 'contact/'), ('Book a session', 'contact/book-a-session/')], 'Let’s find a time to talk.', 'A free 30-minute conversation about where your business is and where you want it to go.', 'Matt-Approach-IMG.jpg', '70% 30%', 'Matt Wilhelmsen at a table with a laptop and coffee')}
+    return f'''{page_head(L, [('Contact', 'contact/'), ('Book a session', 'contact/book-a-session/')], 'Let’s find a time to talk.', 'A free 30-minute conversation about where your business is and where you want it to go.')}
 <section class="sec tight">
   <div class="wrap">
     {sec_head('What to expect')}

@@ -1,5 +1,5 @@
 // CRM endpoint (passcode required): list, add, update and delete leads.
-import { json, checkAuth, sleep, listLeads, readLead, saveLead, deleteLead, validId, newId, clean, cleanList, isEmail, STAGES } from './_lib.js';
+import { json, checkAuth, sleep, listLeads, readLead, saveLead, deleteLead, readVersion, validId, newId, clean, cleanList, isEmail, STAGES } from './_lib.js';
 
 const STAGE_NAMES = { new: 'New', contacted: 'Contacted', discovery: 'Discovery call', proposal: 'Proposal', won: 'Client', lost: 'Not a fit' };
 
@@ -18,7 +18,11 @@ export default {
           const lead = await readLead(id);
           return lead ? json({ lead }) : json({ error: 'Unknown lead' }, 404);
         }
-        return json({ leads: await listLeads() });
+        // the portal sends the version it already has; if nothing changed, skip the listing entirely
+        const version = await readVersion();
+        const since = url.searchParams.get('since');
+        if (since && since === version) return json({ unchanged: true, version });
+        return json({ leads: await listLeads(), version });
       }
 
       if (request.method === 'POST') {
@@ -39,8 +43,8 @@ export default {
           activity: [{ at: now, type: 'created', text: 'Added by hand' }],
           transcript: [], answers: [], utm: {},
         };
-        await saveLead(lead);
-        return json({ lead }, 201);
+        const v = await saveLead(lead);
+        return json({ lead, ...v }, 201);
       }
 
       if (request.method === 'PATCH') {
@@ -72,14 +76,14 @@ export default {
         if (b.lastViewedAt) lead.lastViewedAt = now;
 
         lead.updatedAt = now;
-        await saveLead(lead);
-        return json({ lead });
+        const v = await saveLead(lead);
+        return json({ lead, ...v });
       }
 
       if (request.method === 'DELETE') {
         if (!validId(id)) return json({ error: 'Unknown lead' }, 404);
-        await deleteLead(id);
-        return json({ ok: true });
+        const v = await deleteLead(id);
+        return json({ ok: true, ...v });
       }
 
       return json({ error: 'Method not allowed' }, 405);

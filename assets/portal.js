@@ -15,7 +15,7 @@
   var SOURCES={conversation:'Conversation','bottleneck-check':'Bottleneck check',guide:'Guide download',contact:'Contact form',booking:'Booking request',manual:'Added by hand'};
   var PAINS={decisions:'In every decision',alignment:'Team isn’t aligned',growth:'Growth is breaking things',unpredictable:'Unpredictable results',leaders:'Leaders aren’t leading yet',stretched:'Stretched too thin',other:'Something else'};
 
-  var state={pass:null,leads:[],view:'pipeline',q:'',stage:'all',source:'all',due:false,sort:{key:'createdAt',dir:-1},openId:null,loading:false};
+  var state={pass:null,mode:'leads',leads:[],view:'pipeline',q:'',stage:'all',source:'all',due:false,sort:{key:'createdAt',dir:-1},openId:null,loading:false};
 
   /* ---------- helpers */
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -70,12 +70,14 @@
   function renderShell(){
     app.innerHTML=
       '<header class="p-top"><div class="p-wrap">'+
-        '<a class="p-brand" href="'+SITE+'"><img src="'+LOGO+'" alt="Matt Wilhelmsen"><span>Leads</span></a>'+
+        '<a class="p-brand" href="'+SITE+'"><img src="'+LOGO+'" alt="Matt Wilhelmsen"><span>CRM</span></a>'+
+        '<div class="seg-tabs p-mode" role="group" aria-label="Mode"><button type="button" data-mode="leads">Leads</button><button type="button" data-mode="analyze">Analyze</button></div>'+
         '<label class="p-search"><span class="sr">Search leads</span><input id="q" type="search" placeholder="Search names, companies, notes" autocomplete="off"><kbd>/</kbd></label>'+
-        '<button class="p-icon" id="refresh" type="button" aria-label="Refresh leads"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
+        '<button class="p-icon" id="refresh" type="button" aria-label="Refresh"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
         '<button class="p-menu-btn" id="signout" type="button">Sign out</button>'+
       '</div></header>'+
       '<main class="p-wrap">'+
+        '<div id="leadsMode">'+
         '<div class="p-head"><div><h1 id="greet">Your pipeline</h1><p id="sub"></p></div>'+
           '<div class="ctas"><button class="btn" id="addLead" type="button">Add a lead</button><button class="btn btn-line" id="export" type="button">Export CSV</button></div></div>'+
         '<section class="tiles" id="tiles" aria-label="Pipeline at a glance"></section>'+
@@ -85,6 +87,8 @@
           '<select class="p-select" id="sourceFilter" aria-label="Filter by source"><option value="all">All sources</option></select>'+
           '<span class="spacer"></span><span class="p-count" id="count"></span></div>'+
         '<section id="view" aria-label="Leads"></section>'+
+        '</div>'+
+        '<div id="analyzeMode" class="analyze" hidden></div>'+
       '</main>'+
       '<div class="drawer-veil" id="veil"></div><aside class="drawer" id="drawer" aria-label="Lead details" aria-hidden="true"></aside>';
     Object.keys(SOURCES).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=SOURCES[k];app.querySelector('#sourceFilter').appendChild(o);});
@@ -92,23 +96,41 @@
     q.addEventListener('input',function(){state.q=q.value.trim().toLowerCase();renderView();});
     app.querySelector('#sourceFilter').addEventListener('change',function(e){state.source=e.target.value;renderView();});
     [].forEach.call(app.querySelectorAll('[data-view]'),function(b){b.addEventListener('click',function(){state.view=b.getAttribute('data-view');store('mw-crm-view',state.view,true);renderView();});});
-    app.querySelector('#refresh').addEventListener('click',function(){refresh(true);});
+    app.querySelector('#refresh').addEventListener('click',function(){if(state.mode==='analyze'&&window.MWAnalyze)window.MWAnalyze.refresh();else refresh(true);});
+    [].forEach.call(app.querySelectorAll('[data-mode]'),function(b){b.addEventListener('click',function(){setMode(b.getAttribute('data-mode'));});});
     app.querySelector('#signout').addEventListener('click',function(){signOut();});
     app.querySelector('#addLead').addEventListener('click',openAdd);
     app.querySelector('#export').addEventListener('click',exportCsv);
     app.querySelector('#veil').addEventListener('click',function(){closeDrawer();});
     document.addEventListener('keydown',function(e){
       var typing=/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||'');
-      if(e.key==='/'&&!typing){e.preventDefault();q.focus();}
+      if(e.key==='/'&&!typing&&state.mode!=='analyze'){e.preventDefault();q.focus();}
       if(e.key==='Escape'&&state.openId&&!document.querySelector('dialog[open]'))closeDrawer();
     });
+  }
+
+  /* ---------- Leads / Analyze */
+  var analyzeMounted=false;
+  function setMode(m){
+    state.mode=m==='analyze'?'analyze':'leads';store('mw-crm-mode',state.mode,true);
+    var a=state.mode==='analyze';
+    app.querySelector('#leadsMode').hidden=a;app.querySelector('#analyzeMode').hidden=!a;
+    app.querySelector('.p-search').classList.toggle('off',a);
+    [].forEach.call(app.querySelectorAll('[data-mode]'),function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-mode')===state.mode));});
+    document.title=(a?'Analyze':'Leads')+' | Matt Wilhelmsen';
+    if(a){closeDrawer(true);if(!window.MWAnalyze){app.querySelector('#analyzeMode').innerHTML='<div class="p-empty"><h2>Analyze didn’t load</h2><p>Refresh the page to try again.</p></div>';return;}
+      if(!analyzeMounted){analyzeMounted=true;window.MWAnalyze.mount(app.querySelector('#analyzeMode'),api,toast);}}
+    else if(window.MWAnalyze)window.MWAnalyze.close();
   }
 
   /* ---------- data */
   function refresh(manual){
     var btn=app.querySelector('#refresh');if(btn)btn.classList.add('spin');
     var before={};state.leads.forEach(function(l){before[l.id]=1;});
-    return api('GET','leads').then(function(j){
+    state.lastRefresh=Date.now();
+    return api('GET','leads'+(state.version&&!manual?'?since='+encodeURIComponent(state.version):'')).then(function(j){
+      if(j.unchanged){state.version=j.version;if(manual)toast('Up to date');return;}
+      state.version=j.version||null;
       var fresh=(j.leads||[]).filter(function(l){return !before[l.id];});
       var hadAny=Object.keys(before).length>0;
       state.leads=j.leads||[];renderAll();
@@ -117,9 +139,11 @@
     }).catch(function(e){if(e.message!=='signed out')toast(e.message);})
       .finally(function(){if(btn)btn.classList.remove('spin');});
   }
+  // our own edit moves the version forward: adopt it only if nothing else changed in between, otherwise reload on the next check
+  function keepVersion(j){state.version=j&&j.prev&&j.prev===state.version?j.version:null;}
   function patch(id,body,msg){
     return api('PATCH','leads?id='+encodeURIComponent(id),body).then(function(j){
-      var i=state.leads.findIndex(function(l){return l.id===id;});if(i>-1)state.leads[i]=j.lead;
+      var i=state.leads.findIndex(function(l){return l.id===id;});if(i>-1)state.leads[i]=j.lead;keepVersion(j);
       renderAll(true);if(msg)toast(msg);return j.lead;
     }).catch(function(e){if(e.message!=='signed out'){toast(e.message);refresh();}});
   }
@@ -334,7 +358,7 @@
     [].forEach.call(drawer.querySelectorAll('[data-del-note]'),function(b){b.addEventListener('click',function(){if(confirm('Delete this note?'))patch(l.id,{deleteNote:b.getAttribute('data-del-note')},'Note deleted');});});
     drawer.querySelector('#delLead').addEventListener('click',function(){
       if(!confirm('Delete '+(l.name||'this lead')+' for good? This can’t be undone.'))return;
-      api('DELETE','leads?id='+encodeURIComponent(l.id)).then(function(){state.leads=state.leads.filter(function(x){return x.id!==l.id;});closeDrawer();renderAll();toast('Lead deleted');}).catch(function(e){if(e.message!=='signed out')toast(e.message);});
+      api('DELETE','leads?id='+encodeURIComponent(l.id)).then(function(j){keepVersion(j);state.leads=state.leads.filter(function(x){return x.id!==l.id;});closeDrawer();renderAll();toast('Lead deleted');}).catch(function(e){if(e.message!=='signed out')toast(e.message);});
     });
   }
   function barlistScores(rows){
@@ -360,7 +384,7 @@
     d.querySelector('form').addEventListener('submit',function(e){
       e.preventDefault();var f=e.target,err=f.querySelector('.form-err');if(!f.reportValidity())return;
       var b={name:f.name.value,email:f.email.value,phone:f.phone.value,company:f.company.value,role:f.role.value,referredBy:f.referredBy.value,painCategory:f.painCategory.value,painLabel:PAINS[f.painCategory.value]||'',note:f.note.value};
-      api('POST','leads',b).then(function(j){state.leads.unshift(j.lead);d.close();renderAll();openDrawer(j.lead.id);toast('Lead added');})
+      api('POST','leads',b).then(function(j){keepVersion(j);state.leads.unshift(j.lead);d.close();renderAll();openDrawer(j.lead.id);toast('Lead added');})
         .catch(function(x){if(x.message!=='signed out'){err.textContent=x.message;err.hidden=false;}});
     });
   }
@@ -377,10 +401,15 @@
   /* ---------- start */
   function boot(){
     state.view=load('mw-crm-view')||'pipeline';
+    // the person running the CRM shouldn't show up in the site's engagement numbers (they can switch this in Analyze)
+    try{if(localStorage.getItem('mw-no-track')===null)localStorage.setItem('mw-no-track','1');}catch(e){}
     renderShell();renderAll();
     app.querySelector('#view').innerHTML='<p class="p-count">Loading leads…</p>';
     refresh();
-    setInterval(function(){if(document.visibilityState==='visible'&&state.pass&&!document.querySelector('dialog[open]'))refresh();},60000);
+    setMode(/analyze/.test(location.hash)?'analyze':(load('mw-crm-mode')||'leads'));
+    // check for new leads every 3 minutes while the tab is visible, and right away when Matt comes back to it
+    setInterval(function(){if(document.visibilityState==='visible'&&state.pass&&state.mode!=='analyze'&&!document.querySelector('dialog[open]'))refresh();},180000);
+    document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible'&&state.pass&&state.mode!=='analyze'&&Date.now()-(state.lastRefresh||0)>60000)refresh();});
   }
   state.pass=load('mw-crm');
   if(state.pass){

@@ -24,10 +24,26 @@ Every capture tool posts to `/api/lead`, and every lead lands in the CRM with wh
 - **Guide downloads:** a soft dialog asks where to send the guide, with a "just download it" option.
 - **Contact and booking forms:** post straight to the CRM.
 - **CRM** (`/portal/`): pipeline board with drag-and-drop stages, list view, search and filters, follow-up dates, values, tags, notes, contact logging, activity history, pattern charts, manual leads and CSV export.
+- **Analyze** (the Leads / Analyze switch in the CRM header): engagement for the last 7, 30 or 90 days against the period before. Traffic and attention, visitor-to-lead rate, leads by source, most-clicked buttons, the chat funnel step by step, the Bottleneck Check funnel, form and guide completion, page-by-page time, scroll and exit rate, sources, referrers, campaigns, devices, countries, landing pages and a day-by-hour heatmap. Every metric has a **?** that explains what it is, how it's calculated, the industry benchmark with its source, and what moves it. Rates based on fewer than 30 visits or events are marked as early data.
 
-Backend: Vercel Functions in `api/` with leads stored as private JSON files in Vercel Blob (`matwil-leads` store). Spam is filtered with a hidden field and a minimum fill time. To rotate the CRM passcode, change `CRM_PASSCODE` in the Vercel project settings and redeploy.
+### Data storage
 
-Run it locally: `npm install`, then `CRM_PASSCODE=anything npm run dev` and open http://localhost:3000. Local leads save to `.dev-leads/`.
+Connect **Upstash Redis** (free plan) to the Vercel project: Storage, Create Database, Upstash, connect to `matwil` for all environments, then redeploy. The functions pick it up from `KV_REST_API_URL` / `KV_REST_API_TOKEN` (or `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN`).
+
+- With Redis connected, leads and engagement data live there. Leads already captured in Blob are copied over automatically the first time the CRM loads.
+- Without Redis, leads stay in private Vercel Blob (`matwil-leads` store) and engagement tracking stays off. Analyze shows the setup steps instead.
+- Why: Blob on the Hobby plan includes 2,000 writes a month and going over locks the store for 30 days, which would also stop lead capture. Daily CRM use plus visit tracking can reach that. Upstash's free plan includes 500,000 commands a month. A month of a few thousand visits and daily CRM use is roughly 50,000 to 100,000.
+- The CRM checks a version marker every 3 minutes (and when you come back to the tab) and only reloads leads when something changed.
+
+### Tracking and privacy
+
+`assets/track.js` runs on every public page. No cookies and no personal data: a random ID in the visitor's browser, the page, referrer, UTM tags, device class, active time (only while the tab is visible and the visitor did something in the last 15 seconds), scroll depth, and clicks on buttons, chat, guides, email and phone links. Country comes from Vercel's edge header; IP addresses are never stored. Visitors with Global Privacy Control or Do Not Track are skipped, bots and headless browsers are dropped, and a browser signed into the CRM is excluded (toggle it in Analyze). A session ends after 30 minutes without activity, and a session counts as engaged with 10+ seconds of active time, 2+ pages, or a lead, matching Google Analytics 4. Raw events roll up into daily summaries the next time Analyze opens; summaries are kept 400 days.
+
+Benchmarks used in Analyze: Databox GA4 benchmarks (Aug 2023) for engagement rate, bounce rate and engagement time; Huemor's 2026 B2B guide (citing WebFX) for visitor-to-lead rate; Zuko (2025) and FormAssembly (2025) for form completion; Riddle's quiz benchmarks (2021 data) for the Bottleneck Check; Yonder and Which-50 (2026) for chat open rate; VWO for scroll depth. Metrics without a dependable public benchmark (pages per session, nudge clicks, guide email capture, reached 75%) say so and compare against the prior period instead.
+
+Spam is filtered with a hidden field and a minimum fill time. To rotate the CRM passcode, change `CRM_PASSCODE` in the Vercel project settings and redeploy.
+
+Run it locally: `npm install`, then `CRM_PASSCODE=anything npm run dev` and open http://localhost:3000. Local leads and engagement data save to `.dev-leads/`.
 
 ## How it's built
 
@@ -39,6 +55,7 @@ Run it locally: `npm install`, then `CRM_PASSCODE=anything npm run dev` and open
 ## Before launch
 
 - Photos, the logo and the guide PDFs load from mattwil.com. Copy them into this repo before the old site goes away.
+- Connect Upstash Redis (see Data storage) so Analyze turns on and the CRM stays inside free limits.
 - New leads don't send an alert yet. Add email or Slack notifications so Matt hears about them right away. A scheduler (Calendly or similar) can also drop into Book a session.
 - Copy is rewritten and tightened from the current site and needs Matt's sign-off.
 - Testimonials are summarized. Drop in Matt's approved, verbatim quotes.

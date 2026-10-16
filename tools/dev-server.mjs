@@ -6,7 +6,7 @@ import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-process.env.LEADS_LOCAL_DIR ||= path.join(ROOT, '.dev-leads');
+if (!process.env.KV_REST_API_URL) process.env.LEADS_LOCAL_DIR ||= path.join(ROOT, '.dev-leads');
 const PORT = Number(process.env.PORT) || 3000;
 const TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css', '.js': 'text/javascript', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg' };
 

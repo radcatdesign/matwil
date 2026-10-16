@@ -402,6 +402,7 @@ def render(page):
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/SplitText.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.3.27/dist/lenis.min.js" defer></script>
+<script src="{root}assets/track.js" defer></script>
 <script src="{root}assets/site.js" defer></script>
 <script src="{root}assets/leads.js" defer></script>
 <script src="{root}assets/motion.js" defer></script>

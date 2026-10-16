@@ -6,6 +6,7 @@
   var root=document.body.getAttribute('data-root')||'';
   var reduce=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var G=function(){return !reduce&&window.gsap;};
+  function T(t,d){try{if(window.MWTrack)window.MWTrack.event(t,d||{});}catch(e){}}
 
   /* ---------- storage + attribution */
   function save(k,v,session){try{(session?sessionStorage:localStorage).setItem(k,JSON.stringify(v));}catch(e){}}
@@ -69,20 +70,21 @@
     nudge.innerHTML='<span class="chat-avatar photo" aria-hidden="true"></span><button type="button" class="chat-nudge-text">What’s the hardest part of running the business right now?</button><button type="button" class="chat-nudge-x" aria-label="Dismiss"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
     document.body.appendChild(nudge);document.body.appendChild(panel);document.body.appendChild(launch);
     logEl=panel.querySelector('.chat-log');inputEl=panel.querySelector('.chat-input');
-    launch.addEventListener('click',function(){chat.open?closeChat():openChat();});
+    launch.addEventListener('click',function(){chat.open?closeChat():openChat({origin:'launcher'});});
     panel.querySelector('.chat-close').addEventListener('click',closeChat);
     panel.addEventListener('keydown',function(e){if(e.key==='Escape')closeChat();});
-    nudge.querySelector('.chat-nudge-text').addEventListener('click',function(){hideNudge();openChat();});
+    nudge.querySelector('.chat-nudge-text').addEventListener('click',function(){T('chat',{a:'nudge_click'});hideNudge();openChat({origin:'nudge'});});
     nudge.querySelector('.chat-nudge-x').addEventListener('click',function(){hideNudge();save('mw-nudge',1,true);});
     document.addEventListener('click',function(e){
       var t=e.target.closest&&e.target.closest('[data-chat]');
-      if(t){e.preventDefault();openChat({pain:t.getAttribute('data-chat-pain')});}
+      if(t){e.preventDefault();openChat({pain:t.getAttribute('data-chat-pain'),origin:'cta'});}
     });
   }
   function isSmall(){return window.matchMedia('(max-width: 640px)').matches;}
   function openChat(opts){
     hideNudge();save('mw-nudge',1,true);
     if(!chat.open){
+      T('chat',{a:'open',o:(opts&&opts.origin)||'launcher'});
       chat.open=true;panel.hidden=false;launch.setAttribute('aria-expanded','true');launch.classList.add('is-open');
       if(isSmall()){document.documentElement.classList.add('chat-lock');}
       if(window.MWLenis)window.MWLenis.stop();
@@ -169,7 +171,7 @@
   }
   function answer(s,value,shown,reply){
     inputEl.innerHTML='';
-    chat.data[s.id]=value;
+    chat.data[s.id]=value;T('chat',{a:'step',st:s.id});
     if(shown){addBubble('them',shown);record('them',shown);}
     chat.i++;persist();
     var lines=[];if(reply)lines.push(reply);
@@ -184,7 +186,7 @@
       transcript:chat.log,elapsed:Date.now()-(chat.started||Date.now())};
     inputEl.innerHTML='<p class="chat-sending">Sending to Matt…</p>';
     send(payload).then(function(){
-      chat.done=true;persist();
+      chat.done=true;persist();T('chat',{a:'complete'});T('lead',{src:'conversation'});
       var lines=(pre||[]).concat(['Got it, '+first(d.name)+'. I read every one of these myself, and I’ll get back to you within one business day.']);
       if(d.nextStep==='Free 30-minute call')lines.push('If you’d like to lock in a time now, you can grab one below.');
       mattSays(lines,renderDone);
@@ -207,7 +209,7 @@
   }
   function showNudge(){
     if(chat.open||load('mw-nudge',true)||chat.log.length)return;
-    nudge.hidden=false;save('mw-nudge',1,true);
+    nudge.hidden=false;save('mw-nudge',1,true);T('chat',{a:'nudge_shown'});
     if(G())gsap.fromTo(nudge,{autoAlpha:0,y:12},{autoAlpha:1,y:0,duration:.6,ease:'expo.out'});
   }
   function hideNudge(){if(nudge)nudge.hidden=true;}
@@ -229,10 +231,10 @@
     links.forEach(function(a){a.addEventListener('click',function(e){
       if(!dlg.showModal)return;e.preventDefault();current=a;opened=Date.now();
       dlg.querySelector('#gateTitle').textContent=a.getAttribute('data-guide');
-      dlg.querySelector('.form-err').hidden=true;dlg.showModal();
+      dlg.querySelector('.form-err').hidden=true;dlg.showModal();T('guide',{a:'click'});
       if(G())gsap.fromTo(dlg,{autoAlpha:0,y:20},{autoAlpha:1,y:0,duration:.5,ease:'expo.out'});
     });});
-    dlg.querySelector('.gate-skip').addEventListener('click',function(e){e.preventDefault();dlg.close();download(current.href);});
+    dlg.querySelector('.gate-skip').addEventListener('click',function(e){e.preventDefault();T('guide',{a:'skip'});dlg.close();download(current.href);});
     var f=dlg.querySelector('.gate-form');
     f.addEventListener('submit',function(e){
       e.preventDefault();var err=f.querySelector('.form-err');
@@ -240,7 +242,7 @@
       if(!EMAIL_RE.test(email)){err.textContent='Add an email so Matt can send it, or choose “Just download it.”';err.hidden=false;return;}
       var btn=f.querySelector('.btn');btn.disabled=true;btn.textContent='Sending…';
       send({source:'guide',guide:current.getAttribute('data-guide'),name:f.name.value.trim(),email:email,website:f.website.value,elapsed:Date.now()-opened})
-        .then(function(){dlg.close();download(current.href);f.reset();})
+        .then(function(){T('guide',{a:'send'});T('lead',{src:'guide'});dlg.close();download(current.href);f.reset();})
         .catch(function(x){err.textContent=x.message+' The download will still start.';err.hidden=false;setTimeout(function(){dlg.close();download(current.href);},1400);})
         .finally(function(){btn.disabled=false;btn.textContent='Send it and download';});
     });
@@ -249,7 +251,7 @@
   /* =========================================================== contact + booking forms */
   function wireForms(){
     [].forEach.call(document.querySelectorAll('form[data-lead]'),function(form){
-      var started=0;form.addEventListener('focusin',function(){if(!started)started=Date.now();});
+      var started=0,kind=form.getAttribute('data-lead');form.addEventListener('focusin',function(){if(!started){started=Date.now();T('form',{a:'start',f:kind});}});
       form.addEventListener('submit',function(e){
         e.preventDefault();
         var err=form.querySelector('.form-err');if(err)err.hidden=true;
@@ -260,6 +262,7 @@
           painDetail:v('message'),elapsed:started?Date.now()-started:0};
         var btn=form.querySelector('[type=submit]'),label=btn.textContent;btn.disabled=true;btn.textContent='Sending…';
         send(payload).then(function(){
+          T('form',{a:'submit',f:kind});T('lead',{src:kind});
           var done=el('div','form-done');
           done.innerHTML='<span class="done-mark" aria-hidden="true"></span><h3></h3><p></p>';
           done.querySelector('h3').textContent='Thanks, '+(first(payload.name)||'friend')+'. It’s with Matt.';
@@ -270,7 +273,7 @@
           if(G())gsap.fromTo(done,{autoAlpha:0,y:16},{autoAlpha:1,y:0,duration:.6,ease:'expo.out'});
         }).catch(function(x){
           if(err){err.innerHTML='';err.appendChild(document.createTextNode(x.message+' You can also email '));var m=el('a','inline-link','matt@mattwil.com');m.href='mailto:matt@mattwil.com';err.appendChild(m);err.appendChild(document.createTextNode('.'));err.hidden=false;}
-          btn.disabled=false;btn.textContent=label;
+          btn.disabled=false;btn.textContent=label;T('form',{a:'error',f:kind});
         });
       });
     });
@@ -313,7 +316,7 @@
     function intro(){
       var n=el('div','check-card');
       n.innerHTML='<p class="check-kicker">8 statements, about 2 minutes</p><h2>How often is each of these true in your business?</h2><p class="lede">Answer honestly. You’ll see your results right away, no email required.</p>';
-      var b=el('button','btn','Start the check');b.type='button';b.addEventListener('click',function(){state.started=Date.now();state.i=0;question();});
+      var b=el('button','btn','Start the check');b.type='button';b.addEventListener('click',function(){state.started=Date.now();state.i=0;T('check',{a:'start'});question();});
       n.appendChild(b);swap(n);
     }
     function question(){
@@ -335,7 +338,7 @@
     }
     function pick(k){
       var item=CHECK[state.i];
-      state.answers[state.i]={q:item.q,a:SCALE[k],v:k+1,area:item.area};
+      state.answers[state.i]={q:item.q,a:SCALE[k],v:k+1,area:item.area};T('check',{a:'answer',i:state.i+1});
       if(state.i<CHECK.length-1){state.i++;question();}else result();
     }
     document.addEventListener('keydown',function(e){
@@ -344,7 +347,7 @@
       if(state.i>=0&&state.i<CHECK.length&&/^[1-4]$/.test(e.key)){e.preventDefault();pick(Number(e.key)-1);}
     });
     function result(){
-      state.i=CHECK.length;
+      state.i=CHECK.length;T('check',{a:'complete'});
       var sums={};Object.keys(AREAS).forEach(function(a){sums[a]=0;});
       state.answers.forEach(function(x){sums[x.area]+=x.v;});
       var total=state.answers.reduce(function(t,x){return t+x.v;},0);
@@ -390,6 +393,7 @@
           painCategory:A.pain,painLabel:A.name,painDetail:f.message.value.trim(),score:total,scores:sums,constraint:A.name,answers:state.answers,
           website:f.website.value,elapsed:Date.now()-state.started})
           .then(function(){
+            T('check',{a:'capture'});T('lead',{src:'bottleneck-check'});
             var done=el('div','form-done');done.innerHTML='<span class="done-mark" aria-hidden="true"></span><h3></h3><p>Matt will look over your answers and reply within one business day.</p>';
             done.querySelector('h3').textContent='Sent. Thanks, '+first(f.name.value)+'.';
             f.replaceWith(done);

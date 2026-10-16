@@ -1033,7 +1033,7 @@ def book(L):
             <label><input type="radio" name="format" value="Phone" data-label="Format" checked><span>Phone</span></label>
             <label><input type="radio" name="format" value="Video" data-label="Format"><span>Video</span></label>
           </div></fieldset>
-        <div class="field full"><label for="bk-times">Good days and times <span class="opt">(optional)</span></label><input id="bk-times" name="times" data-label="Availability" placeholder="For example, Tuesday or Thursday mornings"></div>
+        <div class="field full"><label for="bk-times">Good days and times <span class="opt">(optional)</span></label><input id="bk-times" name="times" data-label="Availability" placeholder="Tuesday or Thursday mornings"></div>
         <div class="field full"><label for="bk-msg">What’s going on in your business?</label><textarea id="bk-msg" name="message" data-label="What’s going on" required></textarea></div>
         <div class="actions"><button class="btn" type="submit">Request a consultation</button><p class="note">Opens a pre-filled email to Matt.</p></div>
         <p class="done" hidden>Your email app should open with the request ready to send. If it doesn’t, write to {EMAIL}.</p>

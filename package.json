@@ -1,0 +1,16 @@
+{
+  "name": "matwil",
+  "private": true,
+  "type": "module",
+  "description": "Matt Wilhelmsen site redesign and lead CRM by RADCAT",
+  "scripts": {
+    "build:pages": "python3 tools/build.py",
+    "dev": "node tools/dev-server.mjs"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.8.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

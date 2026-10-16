@@ -376,16 +376,19 @@ h3{font-size:var(--t-h3);line-height:1.2;letter-spacing:-.016em;font-stretch:100
 .field.full{grid-column:1/-1}
 .field label,.field legend{font-family:var(--display);font-stretch:100%;font-size:.875rem;font-weight:600;color:var(--ink);padding:0}
 .field .opt{font-weight:400;color:var(--muted)}
-.field input,.field select,.field textarea{font:inherit;font-family:var(--serif);font-size:1.0625rem;color:var(--ink);background:var(--mist);border:1.5px solid transparent;border-radius:6px;padding:.8em .95em;width:100%;transition:border-color .2s,box-shadow .25s,background-color .2s}
+.field input,.field select,.field textarea{font:inherit;font-family:var(--display);font-stretch:100%;font-size:1.0625rem;line-height:1.4;color:var(--ink);background:#fff;border:1.5px solid #B4C4BA;border-radius:8px;padding:.85em 1em;min-height:3.3rem;width:100%;-webkit-appearance:none;appearance:none;transition:border-color .2s,box-shadow .25s}
+.field select{background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);background-position:calc(100% - 1.3rem) 55%,calc(100% - 1rem) 55%;background-size:.32rem .32rem;background-repeat:no-repeat;padding-right:2.5rem}
 .field textarea{min-height:9rem;resize:vertical;line-height:1.5}
-.field input:hover,.field select:hover,.field textarea:hover{border-color:#B8C9BE}
-.field input:focus,.field select:focus,.field textarea:focus{outline:none;background:#fff;border-color:var(--spruce);box-shadow:0 0 0 4px rgba(1,93,50,.12)}
+.field ::placeholder{color:#7A8781;opacity:1}
+.field input:hover,.field select:hover,.field textarea:hover{border-color:#86A092}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--spruce);box-shadow:0 0 0 4px rgba(1,93,50,.14)}
+.field input:user-invalid,.field textarea:user-invalid{border-color:#B5523B}
 .seg{display:flex;gap:.5rem;flex-wrap:wrap}
 .seg label{position:relative;cursor:pointer}
 .seg input{position:absolute;opacity:0;width:1px;height:1px}
-.seg span{display:inline-block;padding:.7em 1.2em;border-radius:999px;background:var(--mist);border:1.5px solid transparent;font-family:var(--display);font-stretch:100%;font-weight:500;font-size:.9375rem;color:var(--ink);transition:background-color .25s,color .25s,border-color .25s}
-.seg label:hover span{border-color:#B8C9BE}
-.seg input:checked+span{background:var(--ink);color:#fff}
+.seg span{display:inline-flex;align-items:center;min-height:3rem;padding:0 1.35em;border-radius:999px;background:#fff;border:1.5px solid #B4C4BA;font-family:var(--display);font-stretch:100%;font-weight:500;font-size:1rem;color:var(--ink);transition:background-color .25s,color .25s,border-color .25s}
+.seg label:hover span{border-color:#86A092}
+.seg input:checked+span{background:var(--ink);border-color:var(--ink);color:#fff}
 .seg input:focus-visible+span{outline:2px solid var(--spruce);outline-offset:3px}
 .form .actions{grid-column:1/-1;display:flex;align-items:center;gap:1.25rem;flex-wrap:wrap;margin-top:.5rem}
 .form .note{font-size:.875rem;color:var(--muted);margin:0}

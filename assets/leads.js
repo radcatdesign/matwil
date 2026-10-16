@@ -60,13 +60,13 @@
   var panel,logEl,inputEl,launch,nudge;
   function buildChat(){
     launch=el('button','chat-launch');launch.type='button';launch.setAttribute('aria-controls','mwChat');launch.setAttribute('aria-expanded','false');
-    launch.innerHTML='<span class="chat-avatar" aria-hidden="true">MW</span><span class="chat-launch-label">Talk it through with Matt</span>';
+    launch.innerHTML='<span class="chat-avatar photo" aria-hidden="true"></span><span class="chat-launch-label">Talk it through with Matt</span>';
     panel=el('div','chat');panel.id='mwChat';panel.hidden=true;panel.setAttribute('role','dialog');panel.setAttribute('aria-labelledby','mwChatTitle');panel.setAttribute('data-lenis-prevent','');
-    panel.innerHTML='<div class="chat-head"><span class="chat-avatar" aria-hidden="true">MW</span><div class="chat-who"><strong id="mwChatTitle">Matt Wilhelmsen</strong><span>Replies personally, usually within a day</span></div>'+
+    panel.innerHTML='<div class="chat-head"><span class="chat-avatar photo" role="img" aria-label="Matt Wilhelmsen"></span><div class="chat-who"><strong id="mwChatTitle">Matt Wilhelmsen</strong><span>Replies personally, usually within a day</span></div>'+
       '<button type="button" class="chat-close" aria-label="Close the conversation"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button></div>'+
       '<div class="chat-log" aria-live="polite"></div><div class="chat-input"></div><p class="chat-foot">Matt only uses what you share here to reply to you.</p>';
     nudge=el('div','chat-nudge');nudge.hidden=true;
-    nudge.innerHTML='<button type="button" class="chat-nudge-text">What’s the hardest part of running the business right now?</button><button type="button" class="chat-nudge-x" aria-label="Dismiss"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
+    nudge.innerHTML='<span class="chat-avatar photo" aria-hidden="true"></span><button type="button" class="chat-nudge-text">What’s the hardest part of running the business right now?</button><button type="button" class="chat-nudge-x" aria-label="Dismiss"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>';
     document.body.appendChild(nudge);document.body.appendChild(panel);document.body.appendChild(launch);
     logEl=panel.querySelector('.chat-log');inputEl=panel.querySelector('.chat-input');
     launch.addEventListener('click',function(){chat.open?closeChat():openChat();});

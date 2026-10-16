@@ -359,7 +359,7 @@ def footer(L):
       {''.join(cols)}
     </div>
     <div class="foot-base">
-      <span>&copy; 2026 Matt Wilhelmsen. All rights reserved.</span>
+      <span>&copy; 2026 Matt Wilhelmsen. All rights reserved. <a href="{L('portal/')}" style="margin-left:1.25rem">Portal</a></span>
       <div class="social">{soc}</div>
     </div>
   </div>

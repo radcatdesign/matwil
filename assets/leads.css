@@ -6,9 +6,13 @@
   box-shadow:0 20px 40px -18px rgba(18,42,30,.6),0 0 0 1px rgba(255,255,255,.06) inset;transition:transform .45s var(--ease),background-color .3s}
 .chat-launch:hover{background:var(--spruce);transform:translateY(-2px)}
 .chat-avatar{flex:none;display:grid;place-items:center;width:2.3rem;height:2.3rem;border-radius:50%;background:var(--sage);color:var(--ink);font-family:var(--display);font-stretch:100%;font-weight:700;font-size:.8125rem;letter-spacing:.03em}
+.chat-avatar.photo{background:var(--sage) url("https://www.mattwil.com/wp-content/uploads/MattWill_Hero-scaled-e1773687387871.jpg") 74% 13%/340% auto no-repeat;box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+.chat-head .chat-avatar.photo{width:2.6rem;height:2.6rem;position:relative}
+.chat-head .chat-avatar.photo::after{content:"";position:absolute;right:-1px;bottom:1px;width:.62rem;height:.62rem;border-radius:50%;background:#5FBF7F;box-shadow:0 0 0 2px var(--ink)}
+.chat-nudge .chat-avatar.photo{position:absolute;left:-.6rem;top:-.9rem;width:2.4rem;height:2.4rem}
 .chat-nudge{position:fixed;right:20px;bottom:86px;z-index:59;max-width:290px;background:var(--paper);border-radius:16px 16px 5px 16px;box-shadow:0 24px 48px -22px rgba(18,42,30,.45),0 0 0 1px rgba(18,42,30,.07)}
 .chat-nudge[hidden]{display:none}
-.chat-nudge-text{display:block;width:100%;text-align:left;background:none;border:0;padding:1rem 2.6rem 1rem 1.1rem;font-family:var(--serif);font-size:1.0625rem;line-height:1.4;color:var(--ink);cursor:pointer}
+.chat-nudge-text{display:block;width:100%;text-align:left;background:none;border:0;padding:1.15rem 2.6rem 1rem 1.6rem;font-family:var(--serif);font-size:1.0625rem;line-height:1.4;color:var(--ink);cursor:pointer}
 .chat-nudge-x{position:absolute;top:.55rem;right:.55rem;width:1.9rem;height:1.9rem;border-radius:50%;border:0;background:var(--mist);color:var(--muted);display:grid;place-items:center;cursor:pointer}
 .chat-nudge-x svg{width:11px;height:11px}
 

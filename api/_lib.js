@@ -2,9 +2,10 @@
 import crypto from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { PLANS } from './_plans.js';
 
 export const STAGES = ['new', 'contacted', 'discovery', 'proposal', 'won', 'lost'];
-export const SOURCES = ['conversation', 'bottleneck-check', 'guide', 'contact', 'booking', 'manual'];
+export const SOURCES = ['conversation', 'bottleneck-check', 'guide', 'contact', 'booking', 'application', 'cohort', 'membership', 'manual'];
 
 const PUBLIC_ORIGINS = ['https://radcatdesign.github.io', 'https://matwil.vercel.app'];
 
@@ -195,6 +196,11 @@ export function buildLead(body, request) {
   const scores = body.scores && typeof body.scores === 'object'
     ? Object.fromEntries(Object.entries(body.scores).slice(0, 10).map(([k, v]) => [clean(k, 40), Number(v) || 0]))
     : null;
+  // application answers and other question/answer pairs from plan forms
+  const qa = Array.isArray(body.qa)
+    ? body.qa.slice(0, 20).map((x) => ({ q: clean(x && x.q, 120), a: clean(x && x.a, 2000) })).filter((x) => x.q && x.a)
+    : [];
+  const plan = PLANS[body.plan] ? body.plan : '';
   const utm = body.utm && typeof body.utm === 'object'
     ? Object.fromEntries(['source', 'medium', 'campaign', 'term', 'content'].map((k) => [k, clean(body.utm[k], 120)]).filter(([, v]) => v))
     : {};
@@ -214,7 +220,9 @@ export function buildLead(body, request) {
     preferredContact: clean(body.preferredContact, 20),
     availability: clean(body.availability, 300),
     message: clean(body.message, 4000),
-    interest: clean(body.interest, 80),
+    interest: plan ? PLANS[plan].name : clean(body.interest, 80),
+    plan,
+    qa,
     guide: clean(body.guide, 200),
     score: Number(body.score) || null,
     scores,
@@ -227,11 +235,11 @@ export function buildLead(body, request) {
     referrer: clean(body.referrer, 300),
     utm,
     stage: 'new',
-    value: 0,
+    value: plan ? PLANS[plan].value : 0,
     followUp: '',
-    tags: [],
+    tags: plan ? [PLANS[plan].name] : [],
     notes: [],
-    activity: [{ at: now, type: 'created', text: `Came in through ${source.replace('-', ' ')}` }],
+    activity: [{ at: now, type: 'created', text: plan ? `${{ application: 'Applied for', cohort: 'Requested a seat in', membership: 'Asked to join' }[source] || 'Interested in'} ${PLANS[plan].name}` : `Came in through ${source.replace('-', ' ')}` }],
     country: request.headers.get('x-vercel-ip-country') || '',
     region: request.headers.get('x-vercel-ip-country-region') || '',
     city: decodeURIComponent(request.headers.get('x-vercel-ip-city') || ''),

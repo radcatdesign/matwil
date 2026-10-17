@@ -29,7 +29,8 @@ function emptyRollup() {
     chat: { nudgeShown: 0, nudgeClick: 0, opens: 0, openSessions: 0, origins: {}, steps: {}, completes: 0 },
     check: { pageSessions: 0, starts: 0, answers: {}, completes: 0, captures: 0 },
     guide: { pageSessions: 0, clicks: 0, sends: 0, skips: 0 },
-    forms: { contact: { pageSessions: 0, starts: 0, submits: 0, errors: 0 }, booking: { pageSessions: 0, starts: 0, submits: 0, errors: 0 } },
+    forms: Object.fromEntries(['contact', 'booking', 'application', 'cohort', 'membership'].map((f) => [f, { pageSessions: 0, starts: 0, submits: 0, errors: 0 }])),
+    plans: { pageSessions: 0 },
     leadSessions: 0, leadsBySrc: {},
   };
 }
@@ -86,6 +87,8 @@ function rollup(records) {
     if (paths.some((p) => /\/downloadable-guides\/$/.test(p))) r.guide.pageSessions++;
     if (paths.some((p) => /\/contact-matt\/$/.test(p))) r.forms.contact.pageSessions++;
     if (paths.some((p) => /\/book-a-session\/$/.test(p))) r.forms.booking.pageSessions++;
+    if (paths.some((p) => /\/get-started\/$/.test(p))) { r.plans.pageSessions++; r.forms.cohort.pageSessions++; r.forms.membership.pageSessions++; }
+    if (paths.some((p) => /\/get-started\/apply\/$/.test(p))) r.forms.application.pageSessions++;
     const steps = new Set(), answers = new Set(), formStarts = new Set();
     let opened = false;
     for (const e of S.ev) {

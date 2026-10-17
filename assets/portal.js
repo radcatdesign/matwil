@@ -12,7 +12,7 @@
 
   var STAGES=[{v:'new',label:'New'},{v:'contacted',label:'Contacted'},{v:'discovery',label:'Discovery call'},{v:'proposal',label:'Proposal'},{v:'won',label:'Client'},{v:'lost',label:'Not a fit'}];
   var STAGE_NAME={};STAGES.forEach(function(s){STAGE_NAME[s.v]=s.label;});
-  var SOURCES={conversation:'Conversation','bottleneck-check':'Bottleneck check',guide:'Guide download',contact:'Contact form',booking:'Booking request',manual:'Added by hand'};
+  var SOURCES={conversation:'Conversation','bottleneck-check':'Bottleneck check',guide:'Guide download',contact:'Contact form',booking:'Booking request',application:'Advisory application',cohort:'Cohort seat request',membership:'Membership',manual:'Added by hand'};
   var PAINS={decisions:'In every decision',alignment:'Team isn’t aligned',growth:'Growth is breaking things',unpredictable:'Unpredictable results',leaders:'Leaders aren’t leading yet',stretched:'Stretched too thin',other:'Something else'};
 
   var state={pass:null,mode:'leads',leads:[],view:'pipeline',q:'',stage:'all',source:'all',due:false,sort:{key:'createdAt',dir:-1},openId:null,loading:false};
@@ -339,6 +339,7 @@
           kv([['How long',esc(l.duration)],['Team size',esc(l.companySize)],['Wants',esc(l.nextStep)],['Prefers',esc(l.preferredContact)],['Availability',esc(l.availability)],['Interested in',esc(l.interest)],['Guide',esc(l.guide)],['Email',l.email?'<a class="inline-link" href="mailto:'+esc(l.email)+'">'+esc(l.email)+'</a>':''],['Phone',esc(l.phone)]])+
         '</div></div>'+
         (scores.length?'<div class="d-sec scores"><h3>Bottleneck check'+(l.score?', scored '+l.score+' of 32':'')+'</h3>'+barlistScores(scores)+(l.answers&&l.answers.length?'<ul class="answers">'+l.answers.map(function(a){return '<li><span>'+esc(a.q)+'</span><b>'+esc(a.a)+'</b></li>';}).join('')+'</ul>':'')+'</div>':'')+
+        (l.qa&&l.qa.length?'<div class="d-sec"><h3>'+(l.source==='application'?'Their application':'Their answers')+'</h3><dl class="qa">'+l.qa.map(function(x){return '<div><dt>'+esc(x.q)+'</dt><dd>'+esc(x.a)+'</dd></div>';}).join('')+'</dl></div>':'')+
         (l.transcript&&l.transcript.length?'<div class="d-sec"><h3>The conversation</h3><div class="transcript">'+l.transcript.map(function(m){return '<div class="b '+(m.from==='matt'?'m':'t')+'">'+esc(m.text)+'</div>';}).join('')+'</div></div>':'')+
         '<div class="d-sec"><h3>Notes</h3><form class="note-form" id="noteForm"><label class="sr" for="note">Add a note</label><textarea id="note" placeholder="What did you learn? What’s the next move?"></textarea><div class="row"><button class="btn" type="submit">Add note</button></div></form>'+
           '<ul class="notes">'+(l.notes||[]).slice().reverse().map(function(n){return '<li><p>'+esc(n.text)+'</p><div class="meta"><time>'+esc(fmtTime(n.at))+'</time><button type="button" data-del-note="'+esc(n.at)+'">Delete</button></div></li>';}).join('')+'</ul></div>'+

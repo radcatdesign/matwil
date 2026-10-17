@@ -249,6 +249,42 @@
   }
 
   /* =========================================================== contact + booking forms */
+  /* ---------- plans: seat request and membership dialogs, and the "which fits" picker */
+  function wirePlans(){
+    [].forEach.call(document.querySelectorAll('[data-plan-open]'),function(b){
+      var dlg=document.getElementById('plan-'+b.getAttribute('data-plan-open'));if(!dlg)return;
+      b.addEventListener('click',function(){
+        if(!dlg.showModal){location.hash=b.getAttribute('data-plan-open');return;}
+        dlg.showModal();var f=dlg.querySelector('input:not(.hp)');if(f)f.focus();
+        if(G())gsap.fromTo(dlg,{autoAlpha:0,y:20},{autoAlpha:1,y:0,duration:.5,ease:'expo.out'});
+      });
+      dlg.addEventListener('click',function(e){if(e.target===dlg)dlg.close();});
+    });
+    var pk=document.getElementById('planPicker');if(!pk)return;
+    var out=document.getElementById('pickOut');
+    var PICK={
+      advisory:['Private Advisory','Matt works alongside you and your leadership team for a year. It’s the fastest way to change how the company runs.','Apply for Advisory','#advisory'],
+      cohort:['Founder Cohort','Structure, a peer group and monthly time with Matt, without a twelve-month commitment.','See the cohort','#cohort'],
+      membership:['Operator Membership','Templates, a monthly live session and answers from Matt, month to month.','See the membership','#membership']};
+    function pick(){
+      var size=Number((pk.querySelector('[name=size]:checked')||{}).value||0),want=(pk.querySelector('[name=want]:checked')||{}).value;
+      if(!size||!want)return;
+      var key=want==='tools'?'membership':want==='peers'?(size>=4?'advisory':'cohort'):(size>=2?'advisory':'cohort');
+      var note=want==='embedded'&&size<2?' Advisory works best once there’s a leadership team to work with, so start here and move up when you’re ready.':'';
+      var p=PICK[key];out.hidden=false;out.innerHTML='';
+      var k=el('p','gate-kicker','Start with'),h=el('h3',null,p[0]),t=el('p',null,p[1]+note),a=el('a','btn',p[2]);
+      a.href=key==='advisory'?(document.querySelector('.tier-top .btn')||{}).href||p[3]:p[3];
+      if(key!=='advisory')a.addEventListener('click',function(e){var card=document.querySelector(p[3]);if(!card)return;e.preventDefault();
+        if(window.MWLenis)window.MWLenis.scrollTo(card,{offset:-100});else card.scrollIntoView({behavior:'smooth',block:'start'});
+        card.classList.add('flash');setTimeout(function(){card.classList.remove('flash');},1600);});
+      out.appendChild(k);out.appendChild(h);out.appendChild(t);out.appendChild(a);
+      T('cta',{k:'pick',l:'Picker: '+p[0]});
+      if(G())gsap.fromTo(out,{autoAlpha:0,y:12},{autoAlpha:1,y:0,duration:.5,ease:'expo.out'});
+    }
+    pk.addEventListener('change',pick);
+    pk.addEventListener('submit',function(e){e.preventDefault();});
+  }
+
   function wireForms(){
     [].forEach.call(document.querySelectorAll('form[data-lead]'),function(form){
       var started=0,kind=form.getAttribute('data-lead');form.addEventListener('focusin',function(){if(!started){started=Date.now();T('form',{a:'start',f:kind});}});
@@ -257,19 +293,28 @@
         var err=form.querySelector('.form-err');if(err)err.hidden=true;
         if(!form.reportValidity())return;
         var v=function(n){var x=form.elements.namedItem(n);if(!x)return '';if(x.length&&x[0]&&x[0].type==='radio'){for(var i=0;i<x.length;i++)if(x[i].checked)return x[i].value;return '';}return (x.value||'').trim();};
-        var payload={source:form.getAttribute('data-lead'),name:v('name'),email:v('email'),phone:v('phone'),company:v('company'),
-          interest:v('topic'),message:v('message'),preferredContact:v('format'),availability:v('times'),website:v('website'),
-          painDetail:v('message'),elapsed:started?Date.now()-started:0};
+        // anything marked data-q goes along as a question and answer, so the CRM shows the whole application
+        var qa=[];[].forEach.call(form.querySelectorAll('[data-q]'),function(x){
+          var a='';if(x.tagName==='FIELDSET'){var c=x.querySelector('input:checked');a=c?c.value:'';}
+          else if(x.type==='checkbox')a=x.checked?x.value:'';else a=(x.value||'').trim();
+          if(a)qa.push({q:x.getAttribute('data-q'),a:a});});
+        var payload={source:form.getAttribute('data-lead'),plan:form.getAttribute('data-plan')||'',name:v('name'),email:v('email'),phone:v('phone'),company:v('company'),
+          role:v('role'),companySize:v('companySize'),interest:v('topic'),message:v('message'),preferredContact:v('format'),availability:v('times'),website:v('website'),
+          painDetail:v('message'),qa:qa,elapsed:started?Date.now()-started:0};
         var btn=form.querySelector('[type=submit]'),label=btn.textContent;btn.disabled=true;btn.textContent='Sending…';
         send(payload).then(function(){
           T('form',{a:'submit',f:kind});T('lead',{src:kind});
           var done=el('div','form-done');
           done.innerHTML='<span class="done-mark" aria-hidden="true"></span><h3></h3><p></p>';
           done.querySelector('h3').textContent='Thanks, '+(first(payload.name)||'friend')+'. It’s with Matt.';
-          done.querySelector('p').textContent=form.getAttribute('data-lead')==='booking'
-            ?'He’ll reply personally within one business day to confirm a time that works.'
-            :'He reads every message himself and will reply within one business day.';
+          var thanks={application:['Application received, '+(first(payload.name)||'friend')+'.','Matt reads every application himself. Expect a reply within two business days, either with times for a fit call or an honest note about what would fit better.'],
+            cohort:['You’re on Matt’s list, '+(first(payload.name)||'friend')+'.','He’ll reach out within one business day to set up a 20-minute fit call. Your seat is confirmed after that.'],
+            membership:['Welcome in, '+(first(payload.name)||'friend')+'.','Matt will send your welcome and payment link within one business day.'],
+            booking:[null,'He’ll reply personally within one business day to confirm a time that works.']}[kind];
+          if(thanks&&thanks[0])done.querySelector('h3').textContent=thanks[0];
+          done.querySelector('p').textContent=thanks?thanks[1]:'He reads every message himself and will reply within one business day.';
           form.replaceWith(done);done.setAttribute('tabindex','-1');done.focus();
+          if(kind==='application')done.scrollIntoView({block:'center',behavior:'smooth'});
           if(G())gsap.fromTo(done,{autoAlpha:0,y:16},{autoAlpha:1,y:0,duration:.6,ease:'expo.out'});
         }).catch(function(x){
           if(err){err.innerHTML='';err.appendChild(document.createTextNode(x.message+' You can also email '));var m=el('a','inline-link','matt@mattwil.com');m.href='mailto:matt@mattwil.com';err.appendChild(m);err.appendChild(document.createTextNode('.'));err.hidden=false;}
@@ -406,8 +451,8 @@
   }
 
   /* ---------- start */
-  buildChat();buildGuideGate();wireForms();buildCheck();
-  var quiet=/\/(contact|bottleneck-check|portal)\//.test(location.pathname);
+  buildChat();buildGuideGate();wireForms();wirePlans();buildCheck();
+  var quiet=/\/(contact|bottleneck-check|portal|apply)\//.test(location.pathname);
   if(!quiet){
     setTimeout(showNudge,32000);
     var fired=false;

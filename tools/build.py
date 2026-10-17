@@ -6,6 +6,7 @@ Every page is written into the repo root, one folder per URL, so the paths
 match the current mattwil.com sitemap. Shared styles and behavior live in
 assets/site.css and assets/site.js. Edit page copy in this file and rebuild.
 """
+import json
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -17,6 +18,23 @@ SOCIAL = [('LinkedIn', 'https://www.linkedin.com/in/mwilhelmsen'),
           ('Instagram', 'https://www.instagram.com/mcwilhelmsen/'),
           ('X', 'https://x.com/MCWilhelmsen')]
 BOOK = 'contact/book-a-session/'
+START = 'get-started/'
+
+# ---------------------------------------------------------------- plans
+# Pricing for /get-started/. Change it here and rebuild: the page, the application and the
+# CRM's deal values (api/_plans.js is generated from this) all update together.
+PLANS = {
+    'advisory': dict(name='Private Advisory', price=9500, term='12-month engagement, billed monthly',
+                     openings='4 companies a year', value=114000),
+    'cohort': dict(name='Founder Cohort', price=1250, term='6 months', full=6750, seats=10, taken=0,
+                   starts='January 2027', value=7500),
+    'membership': dict(name='Operator Membership', price=149, term='Month to month, cancel anytime', value=1788,
+                       checkout=''),  # paste a Stripe Payment Link here to take card payment on the spot
+}
+
+
+def usd(n):
+    return f'${n:,}'
 
 # The sitemap, mirrored from mattwil.com
 NAV = [
@@ -29,7 +47,8 @@ NAV = [
         ('One-on-one coaching', 'services/one-on-one-coaching/'),
         ('Leadership development', 'services/leadership-development/'),
         ('Group coaching', 'services/group-coaching/'),
-        ('Public speaking', 'services/public-speaking/')]),
+        ('Public speaking', 'services/public-speaking/'),
+        ('Plans &amp; pricing', START)]),
     ('Resources', 'resources/', [
         ('Bottleneck check', 'bottleneck-check/'),
         ('Blog', 'resources/blogs/'),
@@ -333,12 +352,12 @@ def header(L, path, section):
   <div class="wrap nav">
     <a class="logo" href="{L('')}" aria-label="Matt Wilhelmsen, home"><img src="{U}logo.svg" alt="Matt Wilhelmsen, Business &amp; Executive Coaching" width="389" height="54"></a>
     <nav class="primary" aria-label="Main"><ul>{''.join(lis)}</ul></nav>
-    <a class="btn btn-sm nav-cta" href="{L(BOOK)}">Book a consultation</a>
+    <a class="btn btn-sm nav-cta" href="{L(START)}">Get started</a>
     <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobileNav">Menu</button>
   </div>
   <nav class="mobile-nav" id="mobileNav" aria-label="Mobile" hidden>
     {''.join(groups)}
-    <a class="btn" href="{L(BOOK)}">Book a consultation</a>
+    <a class="btn" href="{L(START)}">Get started</a>
   </nav>
 </header>'''
 
@@ -1075,9 +1094,234 @@ def bottleneck(L):
 </section>'''
 
 
+# ---------------------------------------------------------------- get started
+
+X_ICON = ('<svg viewBox="0 0 14 14" aria-hidden="true"><path d="M3 3l8 8M11 3l-8 8" stroke="currentColor" '
+          'stroke-width="1.8" stroke-linecap="round"/></svg>')
+
+
+def tier_list(lines, cls='checks'):
+    return f'<ul class="{cls}">' + ''.join(f'<li>{x}</li>' for x in lines) + '</ul>'
+
+
+def seat_meter(c):
+    left = c['seats'] - c['taken']
+    if not c['taken']:
+        return f'<p class="seats"><b>{c["seats"]} seats</b> per cohort. Next one starts {c["starts"]}.</p>'
+    pct = round(c['taken'] / c['seats'] * 100)
+    word = 'seat' if left == 1 else 'seats'
+    return (f'<div class="seats"><p><b>{left} of {c["seats"]} {word} left</b> for {c["starts"]}.</p>'
+            f'<span class="seat-bar" role="img" aria-label="{c["taken"]} of {c["seats"]} seats taken"><i style="width:{pct}%"></i></span></div>')
+
+
+def plan_dialog(L, key, kicker, title, lede, button, extra=''):
+    return f"""<dialog class="gate plan-dlg" id="plan-{key}" aria-labelledby="plan-{key}-title">
+  <form method="dialog" class="gate-x"><button aria-label="Close">{X_ICON}</button></form>
+  <p class="gate-kicker">{kicker}</p>
+  <h2 id="plan-{key}-title">{title}</h2>
+  <p class="gate-lede">{lede}</p>
+  <form class="form gate-form" data-lead="{key}" data-plan="{key}" novalidate>
+    <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <div class="field"><label for="{key}-name">Name</label><input id="{key}-name" name="name" autocomplete="name" required></div>
+    <div class="field"><label for="{key}-email">Email</label><input id="{key}-email" name="email" type="email" autocomplete="email" required></div>
+    {extra}
+    <div class="actions"><button class="btn" type="submit">{button}</button></div>
+    <p class="form-err" hidden></p>
+  </form>
+</dialog>"""
+
+
+@page(START, 'Plans &amp; pricing', 'Three ways to work with business and executive coach Matt Wilhelmsen: Private Advisory by application, the Founder Cohort, and the Operator Membership.', 'services/')
+def get_started(L):
+    A, C, M = PLANS['advisory'], PLANS['cohort'], PLANS['membership']
+    join = (f'<a class="btn" href="{M["checkout"]}">Join for {usd(M["price"])} a month</a>' if M['checkout'] else
+            f'<button class="btn" type="button" data-plan-open="membership">Join for {usd(M["price"])} a month</button>')
+    cohort_extra = f"""<div class="field"><label for="cohort-company">Company</label><input id="cohort-company" name="company" autocomplete="organization" required></div>
+    <div class="field"><label for="cohort-size">Team size</label><select id="cohort-size" name="companySize" required><option value="">Choose one</option><option>1 to 9</option><option>10 to 19</option><option>20 to 49</option><option>50 to 99</option><option>100 to 250</option><option>250+</option></select></div>
+    <div class="field"><label for="cohort-msg">What do you want out of the six months?</label><textarea id="cohort-msg" name="message" rows="3" required></textarea></div>"""
+    member_extra = """<div class="field"><label for="membership-company">Company <span class="opt">(optional)</span></label><input id="membership-company" name="company" autocomplete="organization"></div>"""
+    return f"""<section class="page-head text-only start-head" aria-label="Page introduction">
+  <div class="ph-copy">
+    {crumbs(L, [('Services', 'services/'), ('Plans &amp; pricing', START)])}
+    <h1>Three ways to work with Matt.</h1>
+    <p class="lede">Pick the depth that fits where the business is today. Every path aims at the same thing: a company that runs well without running through you.</p>
+  </div>
+</section>
+
+<section class="sec tight tiers-sec" aria-label="Plans">
+  <div class="wrap">
+    <article class="tier tier-top" id="advisory" aria-labelledby="advisoryTitle">
+      <div class="tier-main">
+        <p class="tier-kicker"><span class="pip" aria-hidden="true"></span>By application only <span class="sep" aria-hidden="true"></span> {A['openings']}</p>
+        <h2 id="advisoryTitle">Private Advisory</h2>
+        <p class="tier-pitch">Matt, embedded with you and your leadership team for twelve months.</p>
+        <p class="price"><b>{usd(A['price'])}</b><span>per month</span></p>
+        <p class="price-note">{A['term']}.</p>
+        <div class="ctas"><a class="btn btn-light" href="{L(START + 'apply/')}">Apply for Advisory</a></div>
+        <p class="tier-fine">Matt reads every application himself and replies within two business days.</p>
+      </div>
+      <div class="tier-incl">
+        <h3>What’s included</h3>
+        {tier_list(['A weekly 60-minute 1:1 with Matt', 'A monthly working session with your leadership team', 'A quarterly planning day, on-site or remote', 'Your operating system built with you: scorecard, meeting rhythm, decision rights and accountability', 'A 360 review for every leader on your team, twice a year', 'A direct line to Matt between sessions, with same-day replies on weekdays', 'Input on hiring and org design for key seats'], 'checks light')}
+        <p class="tier-fit"><b>Built for</b> founders and CEOs with 20 to 250 people who are ready to change how the company runs, not just talk about it.</p>
+      </div>
+    </article>
+
+    <div class="tier-pair">
+      <article class="tier tier-mid" id="cohort" aria-labelledby="cohortTitle">
+        <p class="tier-kicker"><span class="pip" aria-hidden="true"></span>Limited seats</p>
+        <h2 id="cohortTitle">Founder Cohort</h2>
+        <p class="tier-pitch">Six months with a small group of founders working the same problems, led by Matt.</p>
+        <p class="price"><b>{usd(C['price'])}</b><span>per month</span></p>
+        <p class="price-note">{C['term']}, or {usd(C['full'])} paid in full.</p>
+        {seat_meter(C)}
+        {tier_list(['A live 90-minute group session every other week', 'A private 1:1 with Matt each month', 'The operating rhythm toolkit: scorecard, meeting templates and a delegation map', 'A peer group that holds you to what you said you’d do', 'A Bottleneck review at the start and the end, so you can see what moved'])}
+        <div class="tier-foot"><button class="btn" type="button" data-plan-open="cohort">Request a seat</button><p class="tier-fine">Seats are confirmed after a 20-minute fit call.</p></div>
+      </article>
+
+      <article class="tier tier-open" id="membership" aria-labelledby="membershipTitle">
+        <p class="tier-kicker"><span class="pip" aria-hidden="true"></span>Open enrollment</p>
+        <h2 id="membershipTitle">Operator Membership</h2>
+        <p class="tier-pitch">Matt’s playbook and a monthly live session, for owners who want to keep sharpening between bigger moves.</p>
+        <p class="price"><b>{usd(M['price'])}</b><span>per month</span></p>
+        <p class="price-note">{M['term']}.</p>
+        {tier_list(['A monthly live Q&amp;A with Matt, recorded if you can’t make it', 'The full template library: scorecards, meeting agendas, role clarity and hiring scorecards', 'Send a question any time and get a video answer from Matt within a week', 'A quarterly Bottleneck Check with a written read from Matt', 'Monthly field notes on what’s working with his clients'])}
+        <div class="tier-foot">{join}<p class="tier-fine">No contract. Stop whenever it stops being useful.</p></div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="sec tight white" aria-labelledby="pickTitle">
+  <div class="wrap pick">
+    <div class="pick-copy">
+      <h2 id="pickTitle">Not sure which fits?</h2>
+      <p class="lede">Two quick questions and you’ll know where to start.</p>
+    </div>
+    <form class="picker" id="planPicker" novalidate>
+      <fieldset class="field"><legend>How many people work in the business?</legend>
+        <div class="seg">{''.join(f'<label><input type="radio" name="size" value="{v}"><span>{t}</span></label>' for v, t in [('1', 'Under 10'), ('2', '10 to 50'), ('3', '50 to 250'), ('4', 'Over 250')])}</div></fieldset>
+      <fieldset class="field"><legend>What would help most right now?</legend>
+        <div class="seg">{''.join(f'<label><input type="radio" name="want" value="{v}"><span>{t}</span></label>' for v, t in [('tools', 'Tools and a monthly check-in'), ('peers', 'A peer group and structure'), ('embedded', 'Matt in it with me and my team')])}</div></fieldset>
+      <div class="pick-out" id="pickOut" aria-live="polite" hidden></div>
+    </form>
+  </div>
+</section>
+
+<section class="sec tight" aria-labelledby="compareTitle">
+  <div class="wrap">
+    {sec_head('Side by side', 'Same coach, same operating system. The difference is how close Matt gets to the work.')}
+    <div class="compare-wrap" tabindex="0" role="region" aria-labelledby="compareTitle">
+      <table class="compare">
+        <caption class="sr-only" id="compareTitle">Plans compared</caption>
+        <thead><tr><th scope="col"><span class="sr-only">Feature</span></th><th scope="col">Private Advisory</th><th scope="col">Founder Cohort</th><th scope="col">Operator Membership</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Time with Matt</th><td>Weekly 1:1</td><td>Monthly 1:1</td><td>Monthly live Q&amp;A</td></tr>
+          <tr><th scope="row">Your leadership team</th><td>Monthly session plus quarterly planning days</td><td>Not included</td><td>Not included</td></tr>
+          <tr><th scope="row">Operating system</th><td>Built with you</td><td>Toolkit and guidance</td><td>Template library</td></tr>
+          <tr><th scope="row">Between sessions</th><td>Direct line to Matt</td><td>Your peer group</td><td>Video answers within a week</td></tr>
+          <tr><th scope="row">360 reviews</th><td>Every leader, twice a year</td><td>Not included</td><td>Not included</td></tr>
+          <tr><th scope="row">Commitment</th><td>12 months</td><td>6 months</td><td>Month to month</td></tr>
+          <tr><th scope="row">How to start</th><td>Apply</td><td>Request a seat</td><td>Join today</td></tr>
+          <tr class="price-row"><th scope="row">Price</th><td>{usd(A['price'])}/mo</td><td>{usd(C['price'])}/mo</td><td>{usd(M['price'])}/mo</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="sec tight dark" aria-labelledby="applyTitle">
+  <div class="wrap">
+    {sec_head('<span id="applyTitle">How Advisory starts</span>', 'Four steps, about two weeks from application to kickoff.')}
+    {steps([('Apply', 'Ten minutes. Tell Matt where the business is and what’s getting in the way.'), ('Fit call', 'A 45-minute conversation to see whether the timing and fit are right for both of you.'), ('Proposal', 'Within a week: the plan for your first 90 days and what success looks like at twelve months.'), ('Kickoff', 'A working day with you and your leadership team to set the rhythm.')])}
+    <div class="ctas" style="margin-top:2.75rem"><a class="btn btn-light" href="{L(START + 'apply/')}">Apply for Advisory</a></div>
+  </div>
+</section>
+
+<section class="sec tight" aria-labelledby="faqTitle">
+  <div class="wrap faq-grid">
+    <h2 id="faqTitle">Questions</h2>
+    <div class="faq">
+      <details><summary>Why is Advisory by application?</summary><p>Matt works with {A['openings']} at this level so each one gets real attention. The application helps both sides see whether the timing and fit are right before anyone commits.</p></details>
+      <details><summary>What happens if the cohort is full?</summary><p>Request a seat anyway. You’ll be first in line for the next cohort, and Matt will tell you honestly whether it’s the right fit before you pay anything.</p></details>
+      <details><summary>Can I move from one plan to another?</summary><p>Yes. Plenty of owners start with the membership or a cohort and move up when the business is ready for it.</p></details>
+      <details><summary>How does billing work?</summary><p>Advisory and the cohort are invoiced monthly, or the cohort can be paid in full up front. The membership bills monthly and you can cancel any time.</p></details>
+      <details><summary>I don’t know where to start.</summary><p>Take the two-minute <a class="inline-link" href="{L('bottleneck-check/')}">Bottleneck Check</a> or <a class="inline-link" href="{L(BOOK)}">book a free consultation</a>. Either one will point you in the right direction.</p></details>
+    </div>
+  </div>
+</section>
+
+{plan_dialog(L, 'cohort', 'Founder Cohort, ' + C['starts'], 'Request a seat', 'Tell Matt a little about the business. He’ll set up a 20-minute fit call before anything is confirmed.', 'Request my seat', cohort_extra)}
+{'' if M['checkout'] else plan_dialog(L, 'membership', 'Operator Membership, ' + usd(M['price']) + ' a month', 'Join the membership', 'Leave your details and Matt will send your welcome and a payment link within one business day.', 'Join the membership', member_extra)}"""
+
+
+@page(START + 'apply/', 'Apply for Private Advisory', 'Apply to work with Matt Wilhelmsen in Private Advisory, his twelve-month engagement with founders and their leadership teams.', 'services/', close=False)
+def apply(L):
+    A = PLANS['advisory']
+    sizes = ''.join(f'<option>{x}</option>' for x in ['1 to 9', '10 to 19', '20 to 49', '50 to 99', '100 to 250', '250+'])
+    rev = ''.join(f'<option>{x}</option>' for x in ['Under $1M', '$1M to $5M', '$5M to $20M', '$20M to $50M', 'Over $50M', 'I’d rather not say'])
+    roles = ''.join(f'<option>{x}</option>' for x in ['Founder or CEO', 'President or COO', 'Owner-operator', 'Another executive role'])
+    start = ''.join(f'<label><input type="radio" name="start" value="{x}" required><span>{x}</span></label>' for x in ['In the next 30 days', 'In 1 to 3 months', 'Later this year'])
+    return f"""{page_head(L, [('Plans &amp; pricing', START), ('Apply', START + 'apply/')], 'Apply for Private Advisory', 'About ten minutes. Matt reads every application himself and replies within two business days.')}
+<section class="sec tight" style="padding-top:0">
+  <div class="wrap apply-grid">
+    <div class="form-card">
+      <form class="form apply-form" data-lead="application" data-plan="advisory" novalidate>
+        <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <h2 class="form-step full"><span>1</span>About you</h2>
+        <div class="field"><label for="ap-name">Name</label><input id="ap-name" name="name" autocomplete="name" required></div>
+        <div class="field"><label for="ap-email">Work email</label><input id="ap-email" name="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="ap-role">Your role</label><select id="ap-role" name="role" required><option value="">Choose one</option>{roles}</select></div>
+        <div class="field"><label for="ap-phone">Phone <span class="opt">(optional)</span></label><input id="ap-phone" name="phone" type="tel" autocomplete="tel"></div>
+
+        <h2 class="form-step full"><span>2</span>The business</h2>
+        <div class="field"><label for="ap-company">Company</label><input id="ap-company" name="company" autocomplete="organization" required></div>
+        <div class="field"><label for="ap-url">Website <span class="opt">(optional)</span></label><input id="ap-url" name="companyUrl" data-q="Website" autocomplete="url" inputmode="url"></div>
+        <div class="field"><label for="ap-size">People on the team</label><select id="ap-size" name="companySize" required><option value="">Choose one</option>{sizes}</select></div>
+        <div class="field"><label for="ap-rev">Annual revenue</label><select id="ap-rev" name="revenue" data-q="Annual revenue" required><option value="">Choose one</option>{rev}</select></div>
+
+        <h2 class="form-step full"><span>3</span>Where things stand</h2>
+        <div class="field full"><label for="ap-msg">What’s the biggest thing getting in the way right now?</label><textarea id="ap-msg" name="message" required></textarea></div>
+        <div class="field full"><label for="ap-goal">Twelve months from now, what would have to be true for this to be worth it?</label><textarea id="ap-goal" name="goal" data-q="Twelve months from now" required></textarea></div>
+        <div class="field full"><label for="ap-tried">What have you already tried? <span class="opt">(optional)</span></label><textarea id="ap-tried" name="tried" data-q="Already tried" rows="3" style="min-height:6rem"></textarea></div>
+
+        <h2 class="form-step full"><span>4</span>Timing</h2>
+        <fieldset class="field full" data-q="Ideal start"><legend>When would you want to start?</legend><div class="seg">{start}</div></fieldset>
+        <div class="field full"><label for="ap-heard">How did you hear about Matt? <span class="opt">(optional)</span></label><input id="ap-heard" name="heard" data-q="Heard about Matt"></div>
+        <label class="consent full"><input type="checkbox" name="ack" value="Yes" data-q="Understands the investment" required><span>I understand Private Advisory is {usd(A['price'])} a month on a twelve-month engagement.</span></label>
+
+        <div class="actions"><button class="btn" type="submit">Send application</button><p class="note">Goes straight to Matt. Nothing is shared.</p></div>
+        <p class="form-err" hidden></p>
+      </form>
+    </div>
+    <aside class="apply-aside" aria-label="What happens next">
+      <h2>What happens next</h2>
+      <ol class="next">
+        <li><b>Matt reads it</b>Within two business days you’ll hear back, either with times for a call or an honest note if another path fits better.</li>
+        <li><b>A 45-minute fit call</b>You talk through the business. No pitch deck, no pressure.</li>
+        <li><b>A proposal in a week</b>Your first 90 days and what success looks like at twelve months.</li>
+      </ol>
+      <div class="aside-card">
+        <p class="price"><b>{usd(A['price'])}</b><span>per month</span></p>
+        <p>{A['term']}. {A['openings'][0].upper() + A['openings'][1:]}.</p>
+      </div>
+      <p class="aside-alt">Prefer to talk first? <a class="inline-link" href="{L(BOOK)}">Book a free consultation</a>, or see the <a class="inline-link" href="{L(START)}">other plans</a>.</p>
+    </aside>
+  </div>
+</section>"""
+
+
 # ---------------------------------------------------------------- write
 
+def write_plans():
+    data = {k: dict(name=v['name'], value=v['value']) for k, v in PLANS.items()}
+    with open(os.path.join(ROOT, 'api', '_plans.js'), 'w', encoding='utf-8') as f:
+        f.write('// Generated by tools/build.py from PLANS. Edit prices there and rebuild.\n'
+                'export const PLANS = ' + json.dumps(data, indent=2) + ';\n')
+
+
 def main():
+    write_plans()
     for p in PAGES:
         out_dir = os.path.join(ROOT, p['path'])
         os.makedirs(out_dir, exist_ok=True)

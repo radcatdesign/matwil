@@ -167,7 +167,7 @@ export default {
       const prev = Array.from({ length: n }, (_, i) => shiftDay(cur[0], -n + i));
       const byDay = await loadDays(prev.concat(cur), today);
       const sum = (days) => days.reduce((acc, d) => (byDay[d] ? merge(acc, JSON.parse(JSON.stringify(byDay[d]))) : acc), emptyRollup());
-      const leads = await listLeads();
+      const leads = (await listLeads()).filter((l) => l.source !== 'story'); // client stories aren't sales leads
       const leadDay = (l) => laDay(new Date(l.createdAt));
       const inRange = (days) => { const s = new Set(days); return leads.filter((l) => s.has(leadDay(l))); };
       const lc = inRange(cur), lp = inRange(prev);

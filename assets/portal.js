@@ -15,7 +15,7 @@
   var SOURCES={conversation:'Conversation','bottleneck-check':'Bottleneck check',guide:'Guide download',contact:'Contact form',booking:'Booking request',partner:'Partner conversation',application:'Advisory application',cohort:'Cohort seat request',membership:'Membership',manual:'Added by hand'};
   var PAINS={decisions:'In every decision',alignment:'Team isn’t aligned',growth:'Growth is breaking things',unpredictable:'Unpredictable results',leaders:'Leaders aren’t leading yet',stretched:'Stretched too thin',other:'Something else'};
 
-  var state={pass:null,mode:'leads',leads:[],view:'pipeline',q:'',stage:'all',source:'all',due:false,sort:{key:'createdAt',dir:-1},openId:null,loading:false};
+  var state={pass:null,mode:'leads',leads:[],stories:[],view:'pipeline',q:'',stage:'all',source:'all',due:false,sort:{key:'createdAt',dir:-1},openId:null,loading:false};
 
   /* ---------- helpers */
   function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -71,7 +71,7 @@
     app.innerHTML=
       '<header class="p-top"><div class="p-wrap">'+
         '<a class="p-brand" href="'+SITE+'"><img src="'+LOGO+'" alt="Matt Wilhelmsen"><span>CRM</span></a>'+
-        '<div class="seg-tabs p-mode" role="group" aria-label="Mode"><button type="button" data-mode="leads">Leads</button><button type="button" data-mode="analyze">Analyze</button></div>'+
+        '<div class="seg-tabs p-mode" role="group" aria-label="Mode"><button type="button" data-mode="leads">Leads</button><button type="button" data-mode="stories">Stories</button><button type="button" data-mode="analyze">Analyze</button></div>'+
         '<label class="p-search"><span class="sr">Search leads</span><input id="q" type="search" placeholder="Search names, companies, notes" autocomplete="off"><kbd>/</kbd></label>'+
         '<button class="p-icon" id="refresh" type="button" aria-label="Refresh"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>'+
         '<button class="p-menu-btn" id="signout" type="button">Sign out</button>'+
@@ -88,6 +88,7 @@
           '<span class="spacer"></span><span class="p-count" id="count"></span></div>'+
         '<section id="view" aria-label="Leads"></section>'+
         '</div>'+
+        '<div id="storiesMode" class="stories" hidden></div>'+
         '<div id="analyzeMode" class="analyze" hidden></div>'+
       '</main>'+
       '<div class="drawer-veil" id="veil"></div><aside class="drawer" id="drawer" aria-label="Lead details" aria-hidden="true"></aside>';
@@ -104,7 +105,7 @@
     app.querySelector('#veil').addEventListener('click',function(){closeDrawer();});
     document.addEventListener('keydown',function(e){
       var typing=/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||'');
-      if(e.key==='/'&&!typing&&state.mode!=='analyze'){e.preventDefault();q.focus();}
+      if(e.key==='/'&&!typing&&state.mode==='leads'){e.preventDefault();q.focus();}
       if(e.key==='Escape'&&state.openId&&!document.querySelector('dialog[open]'))closeDrawer();
     });
   }
@@ -112,12 +113,13 @@
   /* ---------- Leads / Analyze */
   var analyzeMounted=false;
   function setMode(m){
-    state.mode=m==='analyze'?'analyze':'leads';store('mw-crm-mode',state.mode,true);
-    var a=state.mode==='analyze';
-    app.querySelector('#leadsMode').hidden=a;app.querySelector('#analyzeMode').hidden=!a;
-    app.querySelector('.p-search').classList.toggle('off',a);
+    state.mode=m==='analyze'||m==='stories'?m:'leads';store('mw-crm-mode',state.mode,true);
+    var a=state.mode==='analyze',st=state.mode==='stories';
+    app.querySelector('#leadsMode').hidden=a||st;app.querySelector('#analyzeMode').hidden=!a;app.querySelector('#storiesMode').hidden=!st;
+    app.querySelector('.p-search').classList.toggle('off',a||st);
     [].forEach.call(app.querySelectorAll('[data-mode]'),function(b){b.setAttribute('aria-pressed',String(b.getAttribute('data-mode')===state.mode));});
-    document.title=(a?'Analyze':'Leads')+' | Matt Wilhelmsen';
+    document.title=(a?'Analyze':st?'Stories':'Leads')+' | Matt Wilhelmsen';
+    if(st){closeDrawer(true);renderStories();}
     if(a){closeDrawer(true);if(!window.MWAnalyze){app.querySelector('#analyzeMode').innerHTML='<div class="p-empty"><h2>Analyze didn’t load</h2><p>Refresh the page to try again.</p></div>';return;}
       if(!analyzeMounted){analyzeMounted=true;window.MWAnalyze.mount(app.querySelector('#analyzeMode'),api,toast);}}
     else if(window.MWAnalyze)window.MWAnalyze.close();
@@ -126,15 +128,16 @@
   /* ---------- data */
   function refresh(manual){
     var btn=app.querySelector('#refresh');if(btn)btn.classList.add('spin');
-    var before={};state.leads.forEach(function(l){before[l.id]=1;});
+    var before={};state.leads.concat(state.stories).forEach(function(l){before[l.id]=1;});
     state.lastRefresh=Date.now();
     return api('GET','leads'+(state.version&&!manual?'?since='+encodeURIComponent(state.version):'')).then(function(j){
       if(j.unchanged){state.version=j.version;if(manual)toast('Up to date');return;}
       state.version=j.version||null;
-      var fresh=(j.leads||[]).filter(function(l){return !before[l.id];});
+      var all=j.leads||[],fresh=all.filter(function(l){return !before[l.id];});
       var hadAny=Object.keys(before).length>0;
-      state.leads=j.leads||[];renderAll();
-      if(hadAny&&fresh.length)toast(fresh.length===1?'New lead from '+(fresh[0].name||fresh[0].email):fresh.length+' new leads');
+      // client stories live in their own tab, not the sales pipeline
+      state.stories=all.filter(isStory);state.leads=all.filter(function(l){return !isStory(l);});renderAll();if(state.mode==='stories')renderStories();
+      if(hadAny&&fresh.length)toast(fresh.length===1?(isStory(fresh[0])?'New client story from ':'New lead from ')+(fresh[0].name||fresh[0].email):fresh.length+' new leads and stories');
       else if(manual)toast('Up to date');
     }).catch(function(e){if(e.message!=='signed out')toast(e.message);})
       .finally(function(){if(btn)btn.classList.remove('spin');});
@@ -144,9 +147,55 @@
   function patch(id,body,msg){
     return api('PATCH','leads?id='+encodeURIComponent(id),body).then(function(j){
       var i=state.leads.findIndex(function(l){return l.id===id;});if(i>-1)state.leads[i]=j.lead;keepVersion(j);
+      var k=state.stories.findIndex(function(l){return l.id===id;});if(k>-1){state.stories[k]=j.lead;renderStories();}
       renderAll(true);if(msg)toast(msg);return j.lead;
     }).catch(function(e){if(e.message!=='signed out'){toast(e.message);refresh();}});
   }
+
+  function isStory(l){return l.source==='story';}
+
+  /* ---------- client stories */
+  var CONSENT={full:'Name, role and company can be shared',anon:'Role only, no name or company',private:'Just for Matt, not for the site'};
+  function renderStories(){
+    var host=app.querySelector('#storiesMode');if(!host)return;
+    var link=location.origin+(SITE.replace(/^(\.\.\/)+/,'/').replace(/^\.\//,'/'))+'share-your-story/';
+    var live=state.stories.filter(function(l){return l.published;}).length;
+    var head='<div class="p-head"><div><h1>Client stories</h1><p>'+(state.stories.length?state.stories.length+(state.stories.length===1?' story, ':' stories, ')+live+' on the site.':'Stories from past clients land here.')+' Published stories show on the homepage and testimonials page within a few minutes.</p></div>'+
+      '<div class="ctas"><button class="btn" type="button" id="copyShare">Copy the share link</button><a class="btn btn-line" href="'+SITE+'share-your-story/" target="_blank" rel="noopener">See the form</a></div></div>';
+    if(!state.stories.length){host.innerHTML=head+'<div class="p-empty"><h2>No stories yet</h2><p>Send the share link to past clients. 150+ businesses is a lot of stories waiting to be told. Each one shows up here first, and nothing goes on the site until you publish it.</p></div>';wireStories(host,link);return;}
+    host.innerHTML=head+'<div class="story-list">'+state.stories.slice().sort(function(a,b){return (b.createdAt||'').localeCompare(a.createdAt||'');}).map(function(l){
+      var s=l.story||{},qa={};(l.qa||[]).forEach(function(x){qa[x.q]=x.a;});
+      var canShare=s.consent&&s.consent!=='private';
+      return '<article class="sc'+(l.published?' live':'')+'" data-id="'+esc(l.id)+'">'+
+        '<div class="sc-top"><div><h2>'+esc(l.name||'Unnamed')+'</h2><p>'+esc([l.role,l.company].filter(Boolean).join(', '))+' · '+esc(fmtDate(l.createdAt))+'</p></div>'+
+          (canShare?'<button type="button" class="pub" data-pub aria-pressed="'+(!!l.published)+'">'+(l.published?'On the site':'Publish on the site')+'</button>':'<span class="pub off">Private</span>')+'</div>'+
+        '<blockquote class="sc-quote">“'+esc(s.quote||'')+'”</blockquote>'+
+        '<div class="sc-edit" hidden><label class="sr" for="q-'+esc(l.id)+'">Edit quote</label><textarea id="q-'+esc(l.id)+'" maxlength="600">'+esc(s.quote||'')+'</textarea><div class="row"><button class="btn" type="button" data-save>Save quote</button><button class="p-menu-btn" type="button" data-cancel>Cancel</button></div></div>'+
+        '<dl class="sc-kv">'+(qa.Before?'<div><dt>Before</dt><dd>'+esc(qa.Before)+'</dd></div>':'')+((l.pain&&l.pain.detail)||l.message?'<div><dt>Now</dt><dd>'+esc((l.pain&&l.pain.detail)||l.message)+'</dd></div>':'')+(qa.Results?'<div><dt>Numbers</dt><dd>'+esc(qa.Results)+'</dd></div>':'')+'</dl>'+
+        '<div class="sc-foot"><span class="consent-tag">'+esc(CONSENT[s.consent]||CONSENT.private)+'</span><button class="p-menu-btn" type="button" data-edit>Edit quote</button><a class="p-menu-btn" href="mailto:'+esc(l.email)+'">Email '+esc((l.name||'').split(' ')[0]||'them')+'</a><button class="p-menu-btn danger" type="button" data-del>Delete</button></div>'+
+      '</article>';}).join('')+'</div>';
+    wireStories(host,link);
+  }
+  function wireStories(host,link){
+    var cp=host.querySelector('#copyShare');
+    if(cp)cp.addEventListener('click',function(){var done=function(){toast('Share link copied');};
+      if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(link).then(done,function(){prompt('Copy the share link',link);});else prompt('Copy the share link',link);});
+    [].forEach.call(host.querySelectorAll('.sc'),function(card){
+      var id=card.getAttribute('data-id'),l=state.stories.filter(function(x){return x.id===id;})[0];if(!l)return;
+      var pub=card.querySelector('[data-pub]');
+      if(pub)pub.addEventListener('click',function(){pub.disabled=true;patch(id,{published:!l.published},l.published?'Taken off the site':'Published. It shows on the site within a few minutes.');});
+      var ed=card.querySelector('.sc-edit'),q=card.querySelector('.sc-quote');
+      card.querySelector('[data-edit]').addEventListener('click',function(){ed.hidden=false;q.hidden=true;ed.querySelector('textarea').focus();});
+      card.querySelector('[data-cancel]').addEventListener('click',function(){ed.hidden=true;q.hidden=false;});
+      card.querySelector('[data-save]').addEventListener('click',function(){var v=ed.querySelector('textarea').value.trim();if(!v)return;patch(id,{quote:v},'Quote saved');});
+      card.querySelector('[data-del]').addEventListener('click',function(){
+        if(!confirmDelete(card))return;
+        api('DELETE','leads?id='+encodeURIComponent(id)).then(function(j){keepVersion(j);state.stories=state.stories.filter(function(x){return x.id!==id;});renderStories();toast('Story deleted');}).catch(function(e){if(e.message!=='signed out')toast(e.message);});
+      });
+    });
+  }
+  // two-step delete without a browser dialog: first click arms the button, second click deletes
+  function confirmDelete(card){var b=card.querySelector('[data-del]');if(b.getAttribute('data-armed'))return true;b.setAttribute('data-armed','1');b.textContent='Click again to delete';setTimeout(function(){if(b.isConnected){b.removeAttribute('data-armed');b.textContent='Delete';}},4000);return false;}
 
   function filtered(){
     return state.leads.filter(function(l){

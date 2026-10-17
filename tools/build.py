@@ -139,6 +139,31 @@ POSTS = [
                 'Decide for yourself what winning at life means', 'Play the long game']),
 ]
 
+# Client words, verbatim from mattwil.com. Add more here as Matt collects approved quotes;
+# stories clients send through /share-your-story/ and Matt publishes from the CRM appear automatically.
+QUOTES = [
+    dict(q='I was in everything. Every decision, every problem. I didn’t realize how much that was costing us.',
+         who='CEO', org='Coaching client'),
+    dict(q='Before we started working together, we were busy but not aligned. Now there’s a clarity to how we operate.',
+         who='President', org='Coaching client'),
+    dict(q='Working with him is different from any coaching I’ve had before. There’s no fluff, no recycled advice.',
+         who='CEO', org='Coaching client'),
+]
+
+# Real outcomes from the client stories and Maren Boothby's engagement, for the results ticker.
+OUTCOMES = [
+    ('Moved from President to CEO', 'Boothby Therapy Services'),
+    ('Revenue climbed and growth became dependable', 'CEO, small business'),
+    ('The CEO stepped back from daily operations', 'CEO, mid-size company'),
+    ('Doubled the size of the company', 'Boothby Therapy Services'),
+    ('Leaders started owning outcomes', 'Executive team'),
+    ('Good months became something the team planned for', 'CEO, small business'),
+    ('Expanded into a new state', 'Boothby Therapy Services'),
+    ('The business stopped depending on one person', 'Executive team'),
+    ('Growth started to feel like progress again', 'CEO, mid-size company'),
+    ('Sold the business at a strong multiple', 'Boothby Therapy Services'),
+]
+
 GUIDES = [
     ('The Ultimate Leadership Playbook: 10 Proven Strategies for Driving Team Excellence',
      'Ten field-tested leadership strategies for building a team that performs without you in the room.',
@@ -310,6 +335,36 @@ def post_list(L, posts=POSTS, with_dek=False):
     return '<ul class="posts text">' + ''.join(out) + '</ul>'
 
 
+def first_sentence(t):
+    i = t.find('. ')
+    return t if i < 0 else t[:i + 1]
+
+
+def quote_wall(L, share=True):
+    cards = ''.join(f'<figure class="quote"><span class="role">{x["who"]}</span><blockquote><p>&ldquo;{x["q"]}&rdquo;</p></blockquote>'
+                    f'<figcaption class="tag">{x["org"]}</figcaption></figure>' for x in QUOTES)
+    more = (f'<p class="wall-share">Worked with Matt? <a class="inline-link" href="{L("share-your-story/")}">Add your story</a>.</p>'
+            if share else '')
+    return f'<div class="quotes wall" data-stories>{cards}</div>{more}'
+
+
+def outcomes_ticker():
+    items = ''.join(f'<li><b>{o}</b><span>{w}</span></li>' for o, w in OUTCOMES)
+    return (f'<div class="ticker" role="region" aria-label="Client outcomes"><ul class="ticker-track">{items}</ul>'
+            f'<ul class="ticker-track" aria-hidden="true">{items}</ul></div>')
+
+
+def before_after(L):
+    rows = []
+    for s in STORIES:
+        rows.append(f'''<a class="ba" href="{L('success-story/' + s['slug'] + '/')}">
+        <div class="ba-head"><span class="meta">{s['client']}</span><h3>{s['title']}</h3></div>
+        <div class="ba-col"><span class="ba-k">Before</span><p>{first_sentence(s['challenge'])}</p></div>
+        <div class="ba-col after"><span class="ba-k">After</span><p>{first_sentence(s['result'])}</p></div>
+        <span class="more">Read the story</span></a>''')
+    return '<div class="ba-list">' + ''.join(rows) + '</div>'
+
+
 def feature_quote(L, link=True):
     more = (f'<a class="link on-dark" href="{L("success-stories/testimonials/")}">Read client testimonials</a>'
             if link else '')
@@ -450,12 +505,13 @@ def home(L):
   <div class="hero-copy">
     <h1 id="heroTitle">Build a company that doesn’t need you in every room.</h1>
     <p class="lede">Business and executive coaching for owners and CEOs who are ready to scale. Matt helps you build the systems, the leaders, and the rhythm that let your team own the results.</p>
-    {ctas(L, secondary=('See client results', 'success-stories/'))}
+    {ctas(L, secondary=('See client results', '#results'))}
+    <figure class="hero-proof"><blockquote><p>&ldquo;Matt has been an invaluable business and executive coach to me over several years.&rdquo;</p></blockquote><figcaption><b>Maren E. Boothby</b>CEO, Boothby Therapy Services. Doubled the company, then sold it.</figcaption></figure>
   </div>
   <figure class="slant">{img('MattWill_Hero-scaled-e1773687387871.jpg', 'Matt Wilhelmsen smiling with arms crossed in front of a bookshelf', '76% 30%', eager=True)}</figure>
 </section>
 
-{proof([('150+', 'businesses coached'), ('E-Myth', 'Former E-Myth Worldwide coach'), ('3 generations', 'of entrepreneurs in the family'), ('4 ways', 'to work together, solo to full team')])}
+{proof([('150+', 'businesses coached'), ('$500M+', 'combined revenue across his E-Myth clients'), ('MVP', 'E-Myth Worldwide’s Most Valuable Partner, 2017'), ('7 years', 'coaching owners at E-Myth before going independent')])}
 
 <section class="sec" aria-labelledby="approachTitle">
   <div class="wrap split">
@@ -500,13 +556,22 @@ def home(L):
   </div>
 </section>
 
-<section class="sec" aria-labelledby="resultsTitle">
+<section class="sec results" id="results" aria-labelledby="resultsTitle">
   <div class="wrap">
-    {sec_head('What changes when it works.', 'Fewer surprises, a team that owns its numbers, and an owner with room to lead again. Here’s what that has looked like for Matt’s clients.').replace('<h2>', '<h2 id="resultsTitle">', 1)}
+    {sec_head('The proof is in the companies.', '150+ businesses coached, and owners who got their time, their teams and their numbers back. Here’s what changed for some of them.').replace('<h2>', '<h2 id="resultsTitle">', 1)}
+  </div>
+  {outcomes_ticker()}
+  <div class="wrap">
     {feature_quote(L)}
-    <div style="height:clamp(56px,6vw,80px)"></div>
-    {stories_block(L)}
-    <div class="sec-foot"><a class="link" href="{L('success-stories/')}">All success stories</a></div>
+    <div class="results-sub">
+      <h3>In their words</h3>
+    </div>
+    {quote_wall(L)}
+    <div class="results-sub">
+      <h3>Before and after</h3>
+      <a class="link" href="{L('success-stories/client-success-stories/')}">All client stories</a>
+    </div>
+    {before_after(L)}
   </div>
 </section>
 
@@ -973,10 +1038,6 @@ for _i, _s in enumerate(STORIES):
 
 @page('success-stories/testimonials/', 'Testimonials', 'What clients say after working with business and executive coach Matt Wilhelmsen.', 'success-stories/')
 def testimonials(L):
-    q = [('Coaching client, CEO', 'Had been part of every decision and every problem without seeing what it cost. After building a better structure with Matt, the team owns its results and the CEO finally has room to lead.'),
-         ('Coaching client, President', 'The company was busy but not aligned. Coaching brought clear direction, defined ownership and a steady operating rhythm, faster than expected, and changed how the whole team shows up.'),
-         ('Coaching client, CEO', 'Valued that Matt arrives prepared and focused on what this specific company needs, with no generic advice and no borrowed frameworks.')]
-    cards = ''.join(f'<figure class="quote"><span class="role">{r}</span><p>{t}</p><span class="tag">Summary of client feedback</span></figure>' for r, t in q)
     return f'''{page_head(L, [('Success stories', 'success-stories/'), ('Testimonials', 'success-stories/testimonials/')], 'In their words.', 'What clients say after working with Matt.')}
 <section class="sec tight" style="padding-top:0">
   <div class="wrap">
@@ -990,7 +1051,7 @@ def testimonials(L):
 <section class="sec white">
   <div class="wrap">
     {sec_head('More from clients')}
-    <div class="quotes">{cards}</div>
+    {quote_wall(L)}
   </div>
 </section>'''
 
@@ -1334,6 +1395,41 @@ def apply(L):
         <p>{A['term']}. {A['openings'][0].upper() + A['openings'][1:]}.</p>
       </div>
       <p class="aside-alt">Prefer to talk first? <a class="inline-link" href="{L(BOOK)}">Book a free consultation</a>, or see the <a class="inline-link" href="{L(START)}">other plans</a>.</p>
+    </aside>
+  </div>
+</section>"""
+
+
+@page('share-your-story/', 'Share your story', 'Worked with Matt Wilhelmsen? Share what changed in your business. Matt reads every story himself.', 'success-stories/', close=False)
+def share_story(L):
+    consent = ''.join(f'<label><input type="radio" name="consent" value="{v}" required><span>{t}</span></label>'
+                      for v, t in [('full', 'Use my name, role and company'), ('anon', 'Use my role only'), ('private', 'Just for Matt')])
+    return f"""{page_head(L, [('Success stories', 'success-stories/'), ('Share your story', 'share-your-story/')], 'Worked with Matt? Tell us what changed.', 'Five minutes. Matt reads every story himself, and nothing goes on the site unless you say it can.')}
+<section class="sec tight" style="padding-top:0">
+  <div class="wrap apply-grid">
+    <div class="form-card">
+      <form class="form" data-lead="story" novalidate>
+        <input class="hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <div class="field"><label for="st-name">Name</label><input id="st-name" name="name" autocomplete="name" required></div>
+        <div class="field"><label for="st-email">Email</label><input id="st-email" name="email" type="email" autocomplete="email" required></div>
+        <div class="field"><label for="st-role">Your role</label><input id="st-role" name="role" placeholder="Founder and CEO" autocomplete="organization-title" required></div>
+        <div class="field"><label for="st-company">Company</label><input id="st-company" name="company" autocomplete="organization" required></div>
+        <div class="field full"><label for="st-before">When you started with Matt, what wasn’t working?</label><textarea id="st-before" name="before" data-q="Before" rows="3" style="min-height:6.5rem" required></textarea></div>
+        <div class="field full"><label for="st-after">What’s different now?</label><textarea id="st-after" name="message" rows="3" style="min-height:6.5rem" required></textarea></div>
+        <div class="field full"><label for="st-numbers">Any numbers you’re comfortable sharing? <span class="opt">(optional)</span></label><input id="st-numbers" name="numbers" data-q="Results" placeholder="Revenue doubled in two years, 20 hours a week back"></div>
+        <div class="field full"><label for="st-quote">In a sentence or two, what would you tell another founder about working with Matt?</label><textarea id="st-quote" name="quote" maxlength="400" rows="3" style="min-height:6.5rem" required></textarea></div>
+        <fieldset class="field full"><legend>Can Matt share this on his site?</legend><div class="seg">{consent}</div></fieldset>
+        <div class="actions"><button class="btn" type="submit">Send my story</button><p class="note">Goes straight to Matt.</p></div>
+        <p class="form-err" hidden></p>
+      </form>
+    </div>
+    <aside class="apply-aside" aria-label="How your story is used">
+      <h2>How it’s used</h2>
+      <ol class="next">
+        <li><b>Matt reads it</b>Every story goes to him directly, not to a marketing inbox.</li>
+        <li><b>You choose what’s shown</b>Your name and company, your role only, or nothing at all.</li>
+        <li><b>It helps the next owner</b>Founders who are where you were want to hear it from someone who’s been there.</li>
+      </ol>
     </aside>
   </div>
 </section>"""

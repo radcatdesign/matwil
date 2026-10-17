@@ -74,6 +74,13 @@ export default {
         if (b.deleteNote && typeof b.deleteNote === 'string') lead.notes = lead.notes.filter((n) => n.at !== b.deleteNote);
         if (b.logContact) lead.activity.push({ at: now, type: 'contact', text: clean(b.logContact, 200) });
         if (b.lastViewedAt) lead.lastViewedAt = now;
+        if (lead.source === 'story' && lead.story) {
+          if ('quote' in b && clean(b.quote, 600)) lead.story.quote = clean(b.quote, 600);
+          if ('published' in b && lead.story.consent !== 'private' && !!b.published !== !!lead.published) {
+            lead.published = !!b.published;
+            lead.activity.push({ at: now, type: 'publish', text: lead.published ? 'Published on the site' : 'Taken off the site' });
+          }
+        }
 
         lead.updatedAt = now;
         const v = await saveLead(lead);

@@ -423,6 +423,39 @@ h3{font-size:var(--t-h3);line-height:1.2;letter-spacing:-.016em;font-stretch:100
 .social{display:flex;gap:1.75rem}
 
 /* motion, only where it answers a pointer and only if the viewer allows it */
+/* ---------- proof: hero quote, outcomes ticker, quote wall, before and after */
+.hero-proof{margin:2.5rem 0 0;padding-top:1.35rem;border-top:1px solid var(--line);max-width:31rem}
+.hero-proof blockquote{margin:0}
+.hero-proof p{font-family:var(--serif);font-style:italic;font-size:1.125rem;line-height:1.45;color:var(--ink);margin:0 0 .55rem;text-indent:-.4em}
+.hero-proof figcaption{font-family:var(--display);font-stretch:100%;font-size:.875rem;line-height:1.45;color:var(--muted)}
+.hero-proof b{color:var(--ink);font-weight:600;margin-right:.45em}
+.results .sec-head{margin-bottom:clamp(28px,3vw,44px)}
+.ticker{display:flex;overflow:hidden;border-block:1px solid var(--line);background:var(--paper);margin-bottom:clamp(40px,5vw,72px);-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.ticker-track{display:flex;flex:none;list-style:none;margin:0;padding:0;animation:tick 70s linear infinite}
+.ticker:hover .ticker-track{animation-play-state:paused}
+.ticker li{display:flex;flex-direction:column;justify-content:center;gap:.25rem;padding:1.4rem 2.6rem;border-right:1px solid var(--line);white-space:nowrap}
+.ticker b{display:flex;align-items:center;gap:.65rem;font-family:var(--display);font-stretch:104%;font-weight:600;font-size:clamp(1.0625rem,.95rem + .4vw,1.3125rem);letter-spacing:-.02em;color:var(--ink)}
+.ticker b::before{content:"";flex:none;width:.6rem;height:.5rem;background:var(--spruce);clip-path:polygon(30% 0,100% 0,70% 100%,0 100%)}
+.ticker span{font-family:var(--display);font-stretch:100%;font-size:.8125rem;color:var(--muted);padding-left:1.25rem}
+@keyframes tick{to{transform:translateX(-100%)}}
+.results-sub{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:.5rem 1.5rem;margin:clamp(56px,6vw,88px) 0 clamp(18px,2vw,26px);padding-top:1.1rem;border-top:2px solid var(--ink)}
+.results-sub h3{font-size:clamp(1.375rem,1.1rem + 1vw,1.875rem);letter-spacing:-.025em}
+.quote blockquote{margin:0}
+.wall .quote p{font-size:1.1875rem;line-height:1.5}
+.wall .quote.new{box-shadow:inset 0 0 0 1.5px var(--sage)}
+.wall-share{margin:1.25rem 0 0;font-family:var(--display);font-stretch:100%;font-size:.9375rem;color:var(--muted)}
+.ba-list{display:grid;gap:12px}
+.ba{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr) auto;gap:clamp(20px,3vw,48px);align-items:start;background:var(--paper);border-radius:6px;padding:clamp(24px,3vw,36px);text-decoration:none;color:inherit;transition:box-shadow .35s var(--ease),transform .35s var(--ease)}
+.ba:hover{box-shadow:0 24px 48px -30px rgba(18,42,30,.5);transform:translateY(-2px)}
+.ba-head .meta{display:block;font-family:var(--display);font-stretch:100%;font-size:.8125rem;color:var(--muted);margin-bottom:.45rem}
+.ba-head h3{font-size:1.375rem;letter-spacing:-.02em;line-height:1.2}
+.ba-k{display:block;font-family:var(--display);font-stretch:100%;font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.ba-col.after .ba-k{color:var(--spruce)}
+.ba-col p{margin:0;font-size:1rem;line-height:1.55;color:var(--charcoal)}
+.ba-col.after p{color:var(--ink)}
+.ba .more{align-self:end;white-space:nowrap;font-family:var(--display);font-stretch:100%;font-weight:600;font-size:.875rem;color:var(--spruce);transition:color .3s}
+.ba:hover .more{color:var(--ink)}
+
 /* ---------- plans + pricing */
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap}
 .start-head .ph-copy{max-width:54rem;padding-bottom:clamp(36px,4vw,60px)}
@@ -643,4 +676,18 @@ html.lenis,html.lenis body{height:auto}
   .tier-kicker .k2{flex-basis:100%;padding-left:1.2rem}
   .tier-pitch{margin-bottom:1.5rem}
   .seg span{min-height:2.75rem;padding:0 1.1em;font-size:.9375rem}
+}
+@media (max-width:980px){
+  .ba{grid-template-columns:1fr 1fr}
+  .ba-head,.ba .more{grid-column:1/-1}
+}
+@media (max-width:640px){
+  .ba{grid-template-columns:1fr}
+  .ticker li{padding:1.1rem 1.6rem}
+  .hero-proof{margin-top:2rem}
+}
+@media (prefers-reduced-motion:reduce){
+  .ticker{overflow-x:auto}
+  .ticker-track{animation:none}
+  .ticker-track[aria-hidden]{display:none}
 }

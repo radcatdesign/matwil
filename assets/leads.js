@@ -249,6 +249,22 @@
   }
 
   /* =========================================================== contact + booking forms */
+  /* ---------- client stories Matt has published from the CRM, added to every quote wall */
+  function loadStories(){
+    var walls=document.querySelectorAll('[data-stories]');if(!walls.length||!window.fetch)return;
+    fetch(API+'/api/stories').then(function(r){return r.ok?r.json():{stories:[]};}).then(function(j){
+      (j.stories||[]).forEach(function(s){
+        [].forEach.call(walls,function(w){
+          var f=el('figure','quote new'),who=[s.name,s.role].filter(Boolean).join(', ');
+          f.appendChild(el('span','role',who||'Coaching client'));
+          var bq=el('blockquote'),p=el('p',null,'“'+s.quote+'”');bq.appendChild(p);f.appendChild(bq);
+          f.appendChild(el('figcaption','tag',s.results||s.company||'Coaching client'));
+          w.insertBefore(f,w.firstChild);
+        });
+      });
+    }).catch(function(){});
+  }
+
   /* ---------- plans: seat request and membership dialogs, and the "which fits" picker */
   function wirePlans(){
     [].forEach.call(document.querySelectorAll('[data-plan-open]'),function(b){
@@ -301,14 +317,15 @@
           if(a)qa.push({q:x.getAttribute('data-q'),a:a});});
         var payload={source:form.getAttribute('data-lead'),plan:form.getAttribute('data-plan')||'',name:v('name'),email:v('email'),phone:v('phone'),company:v('company'),
           role:v('role'),companySize:v('companySize'),interest:v('topic'),message:v('message'),preferredContact:v('format'),availability:v('times'),website:v('website'),
-          painDetail:v('message'),qa:qa,elapsed:started?Date.now()-started:0};
+          painDetail:v('message'),qa:qa,quote:v('quote'),consent:v('consent'),elapsed:started?Date.now()-started:0};
         var btn=form.querySelector('[type=submit]'),label=btn.textContent;btn.disabled=true;btn.textContent='Sending…';
         send(payload).then(function(){
           T('form',{a:'submit',f:kind});T('lead',{src:kind});
           var done=el('div','form-done');
           done.innerHTML='<span class="done-mark" aria-hidden="true"></span><h3></h3><p></p>';
           done.querySelector('h3').textContent='Thanks, '+(first(payload.name)||'friend')+'. It’s with Matt.';
-          var thanks={partner:['Thank you, '+(first(payload.name)||'friend')+'.','Matt will reach out personally within one business day to find a time to talk. Nothing goes further until you’ve spoken.'],
+          var thanks={story:['Thank you, '+(first(payload.name)||'friend')+'.',payload.consent==='private'?'It’s with Matt, and it stays with Matt.':'Matt reads every story himself. It only goes on the site the way you said it could.'],
+            partner:['Thank you, '+(first(payload.name)||'friend')+'.','Matt will reach out personally within one business day to find a time to talk. Nothing goes further until you’ve spoken.'],
             application:['Application received, '+(first(payload.name)||'friend')+'.','Matt reads every application himself. Expect a reply within two business days, either with times for a fit call or an honest note about what would fit better.'],
             cohort:['You’re on Matt’s list, '+(first(payload.name)||'friend')+'.','He’ll reach out within one business day to set up a 20-minute fit call. Your seat is confirmed after that.'],
             membership:['Welcome in, '+(first(payload.name)||'friend')+'.','Matt will send your welcome and payment link within one business day.'],
@@ -453,7 +470,7 @@
   }
 
   /* ---------- start */
-  buildChat();buildGuideGate();wireForms();wirePlans();buildCheck();
+  buildChat();buildGuideGate();wireForms();wirePlans();loadStories();buildCheck();
   var quiet=/\/(contact|bottleneck-check|portal|apply)\//.test(location.pathname);
   if(!quiet){
     setTimeout(showNudge,32000);

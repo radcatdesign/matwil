@@ -5,7 +5,7 @@ import path from 'node:path';
 import { PLANS } from './_plans.js';
 
 export const STAGES = ['new', 'contacted', 'discovery', 'proposal', 'won', 'lost'];
-export const SOURCES = ['conversation', 'bottleneck-check', 'guide', 'contact', 'booking', 'application', 'cohort', 'membership', 'manual'];
+export const SOURCES = ['conversation', 'bottleneck-check', 'guide', 'contact', 'booking', 'partner', 'application', 'cohort', 'membership', 'manual'];
 
 const PUBLIC_ORIGINS = ['https://radcatdesign.github.io', 'https://matwil.vercel.app'];
 
@@ -239,7 +239,7 @@ export function buildLead(body, request) {
     followUp: '',
     tags: plan ? [PLANS[plan].name] : [],
     notes: [],
-    activity: [{ at: now, type: 'created', text: plan ? `${{ application: 'Applied for', cohort: 'Requested a seat in', membership: 'Asked to join' }[source] || 'Interested in'} ${PLANS[plan].name}` : `Came in through ${source.replace('-', ' ')}` }],
+    activity: [{ at: now, type: 'created', text: plan ? `${{ partner: 'Asked for a private conversation about', application: 'Applied for', cohort: 'Requested a seat in', membership: 'Asked to join' }[source] || 'Interested in'} ${PLANS[plan].name}` : `Came in through ${source.replace('-', ' ')}` }],
     country: request.headers.get('x-vercel-ip-country') || '',
     region: request.headers.get('x-vercel-ip-country-region') || '',
     city: decodeURIComponent(request.headers.get('x-vercel-ip-city') || ''),

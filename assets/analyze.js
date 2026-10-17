@@ -61,6 +61,9 @@
       bench:{low:.45,high:.68,better:'high',text:'Zuko (2025) puts average form completion near 52% (55.5% desktop, 47.5% mobile); FormAssembly’s 2025 data shows about 68% of starters finish.'},tip:'Fewer required fields and clear error messages lift this most.'},
     planVisits:{title:'Plans page visits',kind:'count',what:'Visits that included the Plans and pricing page.',calc:'Sessions with at least one view of /get-started/.',
       bench:null,tip:'The header’s Get started button and the service pages feed this. Compare it with leads from the three plans below.'},
+    formPartner:{title:'Partner conversation requests',kind:'pct',what:'Of the people who start the Operating Partner request, how many send it.',calc:'Requests sent ÷ sessions where someone clicked into a field on the private conversation request.',
+      bench:null,benchNote:'No public benchmark exists for a request this size. Volume will be low by design, so read it alongside the CRM: one good conversation a quarter can be a strong result.',
+      tip:'People who reach this form are usually serious. If they start and stop, the revenue question or the price may be the moment to look at.'},
     formApply:{title:'Application completion',kind:'pct',what:'Of the people who start the Private Advisory application, how many send it.',
       calc:'Applications sent ÷ sessions where someone clicked into a field on the application.',
       bench:{low:.35,high:.6,better:'high',text:'No published benchmark exists for long applications. Zuko’s 2025 data puts average form completion near 52%, and longer forms finish less often, so 35% to 60% is a fair range here.'},
@@ -163,18 +166,18 @@
       chatOpen:div(C.chat.openSessions,S),nudge:div(C.chat.nudgeClick,C.chat.nudgeShown),chatDone:div(C.chat.completes,C.chat.steps.pain||0),chatLeads:C.chat.completes,
       checkStart:div(C.check.starts,C.check.pageSessions),checkDone:div(C.check.completes,C.check.starts),checkCapture:div(C.check.captures,C.check.completes),
       formContact:div(C.forms.contact.submits,C.forms.contact.starts),formBooking:div(C.forms.booking.submits,C.forms.booking.starts),guide:div(C.guide.sends,C.guide.clicks),
-      planVisits:C.plans.pageSessions,formApply:div(C.forms.application.submits,C.forms.application.starts),formCohort:div(C.forms.cohort.submits,C.forms.cohort.starts),formMember:div(C.forms.membership.submits,C.forms.membership.starts),
+      planVisits:C.plans.pageSessions,formPartner:div(C.forms.partner.submits,C.forms.partner.starts),formApply:div(C.forms.application.submits,C.forms.application.starts),formCohort:div(C.forms.cohort.submits,C.forms.cohort.starts),formMember:div(C.forms.membership.submits,C.forms.membership.starts),
       scroll:div(C.scroll.sum/100,C.scroll.n),reach75:div(C.scroll.r75,C.scroll.n)};
     var prv={visitors:P.visitors,sessions:PS,pageviews:P.pageviews,engagement:eng(P),bounce:eng(P)==null?null:1-eng(P),time:div(P.activeMs,PS),pps:div(P.pageviews,PS),newv:div(P.newVisitors,P.visitors),
       conv:div(D.leads.previous,P.visitors),leads:D.leads.previous,intents:(P.intents.email||0)+(P.intents.phone||0),won:null,
       chatOpen:div(P.chat.openSessions,PS),nudge:div(P.chat.nudgeClick,P.chat.nudgeShown),chatDone:div(P.chat.completes,P.chat.steps.pain||0),chatLeads:P.chat.completes,
       checkStart:div(P.check.starts,P.check.pageSessions),checkDone:div(P.check.completes,P.check.starts),checkCapture:div(P.check.captures,P.check.completes),
       formContact:div(P.forms.contact.submits,P.forms.contact.starts),formBooking:div(P.forms.booking.submits,P.forms.booking.starts),guide:div(P.guide.sends,P.guide.clicks),
-      planVisits:P.plans.pageSessions,formApply:div(P.forms.application.submits,P.forms.application.starts),formCohort:div(P.forms.cohort.submits,P.forms.cohort.starts),formMember:div(P.forms.membership.submits,P.forms.membership.starts),
+      planVisits:P.plans.pageSessions,formPartner:div(P.forms.partner.submits,P.forms.partner.starts),formApply:div(P.forms.application.submits,P.forms.application.starts),formCohort:div(P.forms.cohort.submits,P.forms.cohort.starts),formMember:div(P.forms.membership.submits,P.forms.membership.starts),
       scroll:div(P.scroll.sum/100,P.scroll.n),reach75:div(P.scroll.r75,P.scroll.n)};
     var n={visitors:S,sessions:S,pageviews:S,engagement:S,bounce:S,time:S,pps:S,newv:C.visitors,conv:C.visitors,leads:S,intents:S,won:S,chatOpen:S,nudge:C.chat.nudgeShown,chatDone:C.chat.steps.pain||0,chatLeads:S,
-      checkStart:C.check.pageSessions,checkDone:C.check.starts,checkCapture:C.check.completes,formContact:C.forms.contact.starts,formBooking:C.forms.booking.starts,guide:C.guide.clicks,planVisits:S,formApply:C.forms.application.starts,formCohort:C.forms.cohort.starts,formMember:C.forms.membership.starts,scroll:C.scroll.n,reach75:C.scroll.n};
-    var T=function(keys){return '<div class="a-tiles">'+keys.map(function(k){return tile(k,cur[k],prv[k],n[k]);}).join('')+'</div>';};
+      checkStart:C.check.pageSessions,checkDone:C.check.starts,checkCapture:C.check.completes,formContact:C.forms.contact.starts,formBooking:C.forms.booking.starts,guide:C.guide.clicks,planVisits:S,formPartner:C.forms.partner.starts,formApply:C.forms.application.starts,formCohort:C.forms.cohort.starts,formMember:C.forms.membership.starts,scroll:C.scroll.n,reach75:C.scroll.n};
+    var T=function(keys){return '<div class="a-tiles'+(keys.length===5?' five':'')+'">'+keys.map(function(k){return tile(k,cur[k],prv[k],n[k]);}).join('')+'</div>';};
 
     // daily bars
     var dmax=Math.max(1,Math.max.apply(null,D.daily.map(function(d){return d.visitors;})));
@@ -186,7 +189,7 @@
     var STEP_NAMES={pain:'Picked what’s weighing on them',painDetail:'Described it',companySize:'Team size',role:'Role',duration:'How long',name:'Name',company:'Company (optional)',email:'Email',phone:'Phone (optional)',nextStep:'Chose a next step'};
     var chatSteps=[['Opened the chat',C.chat.openSessions]].concat(Object.keys(STEP_NAMES).map(function(k){return [STEP_NAMES[k],C.chat.steps[k]||0];})).concat([['Sent to Matt',C.chat.completes]]);
     var checkSteps=[['Started',C.check.starts]].concat([1,2,3,4,5,6,7,8].map(function(i){return ['Answered statement '+i,C.check.answers[i]||0];})).concat([['Saw results',C.check.completes],['Asked for Matt’s take',C.check.captures]]);
-    var srcNames={conversation:'Conversation','bottleneck-check':'Bottleneck check',guide:'Guide download',contact:'Contact form',booking:'Booking request',application:'Advisory application',cohort:'Cohort seat request',membership:'Membership',manual:'Added by hand'};
+    var srcNames={conversation:'Conversation','bottleneck-check':'Bottleneck check',guide:'Guide download',contact:'Contact form',booking:'Booking request',partner:'Partner conversation',application:'Advisory application',cohort:'Cohort seat request',membership:'Membership',manual:'Added by hand'};
     var leadSrc=top(D.leads.bySource).map(function(r){return [srcNames[r[0]]||r[0],r[1]];});
     var byLabel={};Object.keys(C.ctas||{}).forEach(function(k){var p=k.split('|'),lab=p[1]||({chat:'Chat button',guide:'Guide download',email:'Email link',phone:'Phone link'})[p[0]]||p[0];byLabel[lab]=(byLabel[lab]||0)+C.ctas[k];});
     var ctaRows=top(byLabel,10);
@@ -220,7 +223,7 @@
       T(['checkStart','checkDone','checkCapture'])+
       '<div class="panel a-wide"><h2>Check funnel</h2>'+funnel(checkSteps,C.check.starts)+'</div>'+
       sectionHead('Plans and pricing','From the plans page to an application, a seat request or a membership.')+
-      T(['planVisits','formApply','formCohort','formMember'])+
+      T(['planVisits','formPartner','formApply','formCohort','formMember'])+
       sectionHead('Forms and guides','Direct requests and guide downloads.')+
       T(['formContact','formBooking','guide'])+
       sectionHead('Content','Which pages hold attention and where people leave.')+

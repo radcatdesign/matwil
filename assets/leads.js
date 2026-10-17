@@ -263,13 +263,14 @@
     var pk=document.getElementById('planPicker');if(!pk)return;
     var out=document.getElementById('pickOut');
     var PICK={
+      partner:['Operating Partner','Matt works inside the company two days a week and owns outcomes with you. One company at a time.','See Operating Partner','#partner'],
       advisory:['Private Advisory','Matt works alongside you and your leadership team for a year. It’s the fastest way to change how the company runs.','Apply for Advisory','#advisory'],
       cohort:['Founder Cohort','Structure, a peer group and monthly time with Matt, without a twelve-month commitment.','See the cohort','#cohort'],
       membership:['Operator Membership','Templates, a monthly live session and answers from Matt, month to month.','See the membership','#membership']};
     function pick(){
       var size=Number((pk.querySelector('[name=size]:checked')||{}).value||0),want=(pk.querySelector('[name=want]:checked')||{}).value;
       if(!size||!want)return;
-      var key=want==='tools'?'membership':want==='peers'?(size>=4?'advisory':'cohort'):(size>=2?'advisory':'cohort');
+      var key=want==='tools'?'membership':want==='peers'?(size>=4?'advisory':'cohort'):(size>=4?'partner':size>=2?'advisory':'cohort');
       var note=want==='embedded'&&size<2?' Advisory works best once there’s a leadership team to work with, so start here and move up when you’re ready.':'';
       var p=PICK[key];out.hidden=false;out.innerHTML='';
       var k=el('p','gate-kicker','Start with'),h=el('h3',null,p[0]),t=el('p',null,p[1]+note),a=el('a','btn',p[2]);
@@ -307,7 +308,8 @@
           var done=el('div','form-done');
           done.innerHTML='<span class="done-mark" aria-hidden="true"></span><h3></h3><p></p>';
           done.querySelector('h3').textContent='Thanks, '+(first(payload.name)||'friend')+'. It’s with Matt.';
-          var thanks={application:['Application received, '+(first(payload.name)||'friend')+'.','Matt reads every application himself. Expect a reply within two business days, either with times for a fit call or an honest note about what would fit better.'],
+          var thanks={partner:['Thank you, '+(first(payload.name)||'friend')+'.','Matt will reach out personally within one business day to find a time to talk. Nothing goes further until you’ve spoken.'],
+            application:['Application received, '+(first(payload.name)||'friend')+'.','Matt reads every application himself. Expect a reply within two business days, either with times for a fit call or an honest note about what would fit better.'],
             cohort:['You’re on Matt’s list, '+(first(payload.name)||'friend')+'.','He’ll reach out within one business day to set up a 20-minute fit call. Your seat is confirmed after that.'],
             membership:['Welcome in, '+(first(payload.name)||'friend')+'.','Matt will send your welcome and payment link within one business day.'],
             booking:[null,'He’ll reply personally within one business day to confirm a time that works.']}[kind];

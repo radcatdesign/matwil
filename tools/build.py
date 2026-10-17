@@ -24,6 +24,8 @@ START = 'get-started/'
 # Pricing for /get-started/. Change it here and rebuild: the page, the application and the
 # CRM's deal values (api/_plans.js is generated from this) all update together.
 PLANS = {
+    'partner': dict(name='Operating Partner', price=40000, term='12-month minimum, billed monthly. Travel billed at cost',
+                    openings='One company at a time', value=480000),
     'advisory': dict(name='Private Advisory', price=9500, term='12-month engagement, billed monthly',
                      openings='4 companies a year', value=114000),
     'cohort': dict(name='Founder Cohort', price=1250, term='6 months', full=6750, seats=10, taken=0,
@@ -1131,9 +1133,14 @@ def plan_dialog(L, key, kicker, title, lede, button, extra=''):
 </dialog>"""
 
 
-@page(START, 'Plans &amp; pricing', 'Three ways to work with business and executive coach Matt Wilhelmsen: Private Advisory by application, the Founder Cohort, and the Operator Membership.', 'services/')
+@page(START, 'Plans &amp; pricing', 'Four ways to work with business and executive coach Matt Wilhelmsen: Operating Partner, Private Advisory by application, the Founder Cohort and the Operator Membership.', 'services/')
 def get_started(L):
-    A, C, M = PLANS['advisory'], PLANS['cohort'], PLANS['membership']
+    P, A, C, M = PLANS['partner'], PLANS['advisory'], PLANS['cohort'], PLANS['membership']
+    rev = ''.join(f'<option>{x}</option>' for x in ['Under $5M', '$5M to $20M', '$20M to $50M', '$50M to $100M', 'Over $100M', 'I’d rather tell Matt directly'])
+    partner_extra = f"""<div class="field"><label for="partner-company">Company</label><input id="partner-company" name="company" autocomplete="organization" required></div>
+    <div class="field"><label for="partner-phone">Best number <span class="opt">(optional)</span></label><input id="partner-phone" name="phone" type="tel" autocomplete="tel"></div>
+    <div class="field"><label for="partner-rev">Annual revenue</label><select id="partner-rev" name="revenue" data-q="Annual revenue" required><option value="">Choose one</option>{rev}</select></div>
+    <div class="field"><label for="partner-msg">What’s at stake in the next twelve months?</label><textarea id="partner-msg" name="message" rows="3" required></textarea></div>"""
     join = (f'<a class="btn" href="{M["checkout"]}">Join for {usd(M["price"])} a month</a>' if M['checkout'] else
             f'<button class="btn" type="button" data-plan-open="membership">Join for {usd(M["price"])} a month</button>')
     cohort_extra = f"""<div class="field"><label for="cohort-company">Company</label><input id="cohort-company" name="company" autocomplete="organization" required></div>
@@ -1143,16 +1150,34 @@ def get_started(L):
     return f"""<section class="page-head text-only start-head" aria-label="Page introduction">
   <div class="ph-copy">
     {crumbs(L, [('Services', 'services/'), ('Plans &amp; pricing', START)])}
-    <h1>Three ways to work with Matt.</h1>
+    <h1>Four ways to work with Matt.</h1>
     <p class="lede">Pick the depth that fits where the business is today. Every path aims at the same thing: a company that runs well without running through you.</p>
   </div>
 </section>
 
 <section class="sec tight tiers-sec" aria-label="Plans">
   <div class="wrap">
+    <article class="tier tier-apex" id="partner" aria-labelledby="partnerTitle">
+      <span class="apex-mark" aria-hidden="true">1</span>
+      <div class="tier-main">
+        <p class="tier-kicker"><span class="pip" aria-hidden="true"></span><span>By private conversation</span><span class="sep" aria-hidden="true"></span><span class="k2">{P['openings']}</span></p>
+        <h2 id="partnerTitle">Operating Partner</h2>
+        <p class="tier-pitch">Matt clears his calendar for one company and works inside it as your operating partner. Not coaching from the sidelines. Two days a week in the building, owning outcomes with you.</p>
+        <p class="price"><b>{usd(P['price'])}</b><span>per month</span></p>
+        <p class="price-note">{usd(P['price'] * 12)} a year. {P['term']}.</p>
+        <div class="ctas"><button class="btn btn-light" type="button" data-plan-open="partner">Request a private conversation</button></div>
+        <p class="tier-fine">When the seat is taken, the next conversation is about timing.</p>
+      </div>
+      <div class="tier-incl">
+        <h3>What Matt takes on</h3>
+        {tier_list(['Two days a week with you and your leadership team, on-site', 'Runs the leadership team cadence himself until your team can run it without him', 'Installs the operating system across every department, not just the top team', 'Leads the search and final interviews for key executive hires', 'Prepares for and joins your board or investor meetings as an advisor', 'Gets the business ready to run, and sell, without you: documented, measured and owned', 'Reachable whenever it matters, nights and weekends included', 'Everything in Private Advisory, for your whole leadership group'], 'checks light')}
+        <p class="tier-fit"><b>Built for</b> founders at a defining moment: scaling past what got you here, preparing for an exit, or handing over the CEO seat.</p>
+      </div>
+    </article>
+
     <article class="tier tier-top" id="advisory" aria-labelledby="advisoryTitle">
       <div class="tier-main">
-        <p class="tier-kicker"><span class="pip" aria-hidden="true"></span>By application only <span class="sep" aria-hidden="true"></span> {A['openings']}</p>
+        <p class="tier-kicker"><span class="pip" aria-hidden="true"></span><span>By application only</span><span class="sep" aria-hidden="true"></span><span class="k2">{A['openings']}</span></p>
         <h2 id="advisoryTitle">Private Advisory</h2>
         <p class="tier-pitch">Matt, embedded with you and your leadership team for twelve months.</p>
         <p class="price"><b>{usd(A['price'])}</b><span>per month</span></p>
@@ -1214,16 +1239,17 @@ def get_started(L):
     <div class="compare-wrap" tabindex="0" role="region" aria-labelledby="compareTitle">
       <table class="compare">
         <caption class="sr-only" id="compareTitle">Plans compared</caption>
-        <thead><tr><th scope="col"><span class="sr-only">Feature</span></th><th scope="col">Private Advisory</th><th scope="col">Founder Cohort</th><th scope="col">Operator Membership</th></tr></thead>
+        <thead><tr><th scope="col"><span class="sr-only">Feature</span></th><th scope="col">Operating Partner</th><th scope="col">Private Advisory</th><th scope="col">Founder Cohort</th><th scope="col">Operator Membership</th></tr></thead>
         <tbody>
-          <tr><th scope="row">Time with Matt</th><td>Weekly 1:1</td><td>Monthly 1:1</td><td>Monthly live Q&amp;A</td></tr>
-          <tr><th scope="row">Your leadership team</th><td>Monthly session plus quarterly planning days</td><td>Not included</td><td>Not included</td></tr>
-          <tr><th scope="row">Operating system</th><td>Built with you</td><td>Toolkit and guidance</td><td>Template library</td></tr>
-          <tr><th scope="row">Between sessions</th><td>Direct line to Matt</td><td>Your peer group</td><td>Video answers within a week</td></tr>
-          <tr><th scope="row">360 reviews</th><td>Every leader, twice a year</td><td>Not included</td><td>Not included</td></tr>
-          <tr><th scope="row">Commitment</th><td>12 months</td><td>6 months</td><td>Month to month</td></tr>
-          <tr><th scope="row">How to start</th><td>Apply</td><td>Request a seat</td><td>Join today</td></tr>
-          <tr class="price-row"><th scope="row">Price</th><td>{usd(A['price'])}/mo</td><td>{usd(C['price'])}/mo</td><td>{usd(M['price'])}/mo</td></tr>
+          <tr><th scope="row">Time with Matt</th><td>Two days a week, on-site</td><td>Weekly 1:1</td><td>Monthly 1:1</td><td>Monthly live Q&amp;A</td></tr>
+          <tr><th scope="row">Your leadership team</th><td>Matt runs the cadence until it runs itself</td><td>Monthly session plus quarterly planning days</td><td>Not included</td><td>Not included</td></tr>
+          <tr><th scope="row">Operating system</th><td>Installed across the company</td><td>Built with you</td><td>Toolkit and guidance</td><td>Template library</td></tr>
+          <tr><th scope="row">Key hires and board</th><td>Leads key hires, joins board meetings</td><td>Input on key seats</td><td>Not included</td><td>Not included</td></tr>
+          <tr><th scope="row">Between sessions</th><td>Whenever it matters</td><td>Direct line to Matt</td><td>Your peer group</td><td>Video answers within a week</td></tr>
+          <tr><th scope="row">360 reviews</th><td>Whole leadership group, twice a year</td><td>Every leader, twice a year</td><td>Not included</td><td>Not included</td></tr>
+          <tr><th scope="row">Commitment</th><td>12-month minimum</td><td>12 months</td><td>6 months</td><td>Month to month</td></tr>
+          <tr><th scope="row">How to start</th><td>Private conversation</td><td>Apply</td><td>Request a seat</td><td>Join today</td></tr>
+          <tr class="price-row"><th scope="row">Price</th><td>{usd(P['price'])}/mo</td><td>{usd(A['price'])}/mo</td><td>{usd(C['price'])}/mo</td><td>{usd(M['price'])}/mo</td></tr>
         </tbody>
       </table>
     </div>
@@ -1242,15 +1268,17 @@ def get_started(L):
   <div class="wrap faq-grid">
     <h2 id="faqTitle">Questions</h2>
     <div class="faq">
+      <details><summary>How is Operating Partner different from Advisory?</summary><p>Advisory is Matt coaching you and your team while you do the work. As Operating Partner he does the work alongside you: he’s in the building two days a week, runs the leadership cadence himself until it holds, and takes shared ownership of specific outcomes. He only does it for {P['openings'].lower()}.</p></details>
       <details><summary>Why is Advisory by application?</summary><p>Matt works with {A['openings']} at this level so each one gets real attention. The application helps both sides see whether the timing and fit are right before anyone commits.</p></details>
       <details><summary>What happens if the cohort is full?</summary><p>Request a seat anyway. You’ll be first in line for the next cohort, and Matt will tell you honestly whether it’s the right fit before you pay anything.</p></details>
       <details><summary>Can I move from one plan to another?</summary><p>Yes. Plenty of owners start with the membership or a cohort and move up when the business is ready for it.</p></details>
-      <details><summary>How does billing work?</summary><p>Advisory and the cohort are invoiced monthly, or the cohort can be paid in full up front. The membership bills monthly and you can cancel any time.</p></details>
+      <details><summary>How does billing work?</summary><p>Operating Partner, Advisory and the cohort are invoiced monthly, or the cohort can be paid in full up front. The membership bills monthly and you can cancel any time.</p></details>
       <details><summary>I don’t know where to start.</summary><p>Take the two-minute <a class="inline-link" href="{L('bottleneck-check/')}">Bottleneck Check</a> or <a class="inline-link" href="{L(BOOK)}">book a free consultation</a>. Either one will point you in the right direction.</p></details>
     </div>
   </div>
 </section>
 
+{plan_dialog(L, 'partner', 'Operating Partner, ' + P['openings'].lower(), 'Request a private conversation', 'This isn’t an application. Tell Matt a little about the company and what’s at stake, and he’ll reach out personally within one business day.', 'Request the conversation', partner_extra)}
 {plan_dialog(L, 'cohort', 'Founder Cohort, ' + C['starts'], 'Request a seat', 'Tell Matt a little about the business. He’ll set up a 20-minute fit call before anything is confirmed.', 'Request my seat', cohort_extra)}
 {'' if M['checkout'] else plan_dialog(L, 'membership', 'Operator Membership, ' + usd(M['price']) + ' a month', 'Join the membership', 'Leave your details and Matt will send your welcome and a payment link within one business day.', 'Join the membership', member_extra)}"""
 

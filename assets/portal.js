@@ -12,7 +12,7 @@
 
   var STAGES=[{v:'new',label:'New'},{v:'contacted',label:'Contacted'},{v:'discovery',label:'Discovery call'},{v:'proposal',label:'Proposal'},{v:'won',label:'Client'},{v:'lost',label:'Not a fit'}];
   var STAGE_NAME={};STAGES.forEach(function(s){STAGE_NAME[s.v]=s.label;});
-  var SOURCES={conversation:'Conversation','bottleneck-check':'Bottleneck check',guide:'Guide download',contact:'Contact form',booking:'Booking request',application:'Advisory application',cohort:'Cohort seat request',membership:'Membership',manual:'Added by hand'};
+  var SOURCES={conversation:'Conversation','bottleneck-check':'Bottleneck check',guide:'Guide download',contact:'Contact form',booking:'Booking request',partner:'Partner conversation',application:'Advisory application',cohort:'Cohort seat request',membership:'Membership',manual:'Added by hand'};
   var PAINS={decisions:'In every decision',alignment:'Team isn’t aligned',growth:'Growth is breaking things',unpredictable:'Unpredictable results',leaders:'Leaders aren’t leading yet',stretched:'Stretched too thin',other:'Something else'};
 
   var state={pass:null,mode:'leads',leads:[],view:'pipeline',q:'',stage:'all',source:'all',due:false,sort:{key:'createdAt',dir:-1},openId:null,loading:false};

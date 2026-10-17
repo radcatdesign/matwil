@@ -218,6 +218,7 @@ dialog.p-dialog .form{grid-template-columns:1fr 1fr}
 .a-sec-head h2{font-size:1.125rem;letter-spacing:-.02em;color:var(--ink)}
 .a-sec-head p{margin:0;color:var(--muted);font-size:.875rem}
 .a-tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.a-tiles.five{grid-template-columns:repeat(5,minmax(0,1fr))}
 .a-tile{background:var(--paper);border-radius:12px;padding:1rem 1.1rem 1.1rem;display:flex;flex-direction:column;min-width:0}
 .a-tile-top{display:flex;align-items:center;justify-content:space-between;gap:.5rem}
 .a-tile .tile-num{margin:.3rem 0 .55rem}
@@ -291,7 +292,8 @@ dialog.p-dialog .form{grid-template-columns:1fr 1fr}
   .funnel li{grid-template-columns:minmax(0,12rem) 1fr 3rem 3.25rem}
   .f-drop{display:none}
 }
-@media (max-width:960px){.a-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1180px){.a-tiles.five{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:960px){.a-tiles,.a-tiles.five{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:720px){
   .p-brand span{display:none}
   .p-top .p-wrap{gap:.6rem}
